@@ -58,7 +58,10 @@ final class InMemoryPetRepository implements PetRepository
 
     public function findAll(): array
     {
-        return array_values($this->pets);
+        return array_values(array_filter(
+            $this->pets,
+            static fn (Pet $pet): bool => $pet->status === 'available'
+        ));
     }
 
     public function save(Pet $pet): int

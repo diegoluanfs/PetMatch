@@ -39,6 +39,7 @@ final class PdoPetRepository implements PetRepository
         $statement = $this->pdo->query(
             'SELECT id, organization_id, name, description, animal_type, breed, gender, birth_date, size, status, city, state, latitude, longitude
              FROM pets
+               WHERE status = \'available\'
              ORDER BY created_at DESC, id DESC'
         );
 
@@ -89,6 +90,7 @@ final class PdoPetRepository implements PetRepository
                  gender = :gender,
                  birth_date = :birth_date,
                  size = :size,
+                 status = :status,
                  city = :city,
                  state = :state,
                  latitude = :latitude,
@@ -107,6 +109,7 @@ final class PdoPetRepository implements PetRepository
             'gender' => $pet->gender,
             'birth_date' => $pet->birthDate,
             'size' => $pet->size,
+            'status' => $pet->status,
             'city' => $pet->city,
             'state' => $pet->state,
             'latitude' => $pet->latitude,
