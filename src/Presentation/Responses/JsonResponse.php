@@ -50,6 +50,11 @@ final class JsonResponse
         return new self(404, ['error' => 'Not Found']);
     }
 
+    public static function notFoundWithMessage(string $message): self
+    {
+        return new self(404, ['error' => $message]);
+    }
+
     public function send(): void
     {
         http_response_code($this->statusCode);

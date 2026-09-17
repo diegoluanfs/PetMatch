@@ -10,6 +10,7 @@ final class Request
         public readonly string $method,
         public readonly string $path,
         public readonly string $body,
+        private readonly array $parameters = [],
     ) {
     }
 
@@ -21,6 +22,30 @@ final class Request
             strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET'),
             $path,
             file_get_contents('php://input') ?: '',
+        );
+    }
+
+    public function parameter(string $name): ?string
+    {
+        $value = $this->parameters[$name] ?? null;
+
+        if (!is_scalar($value)) {
+            return null;
+        }
+
+        return (string) $value;
+    }
+
+    /**
+     * @param array<string, scalar> $parameters
+     */
+    public function withParameters(array $parameters): self
+    {
+        return new self(
+            $this->method,
+            $this->path,
+            $this->body,
+            $parameters,
         );
     }
 
