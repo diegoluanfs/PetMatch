@@ -14,6 +14,8 @@ use PetMatch\Application\Organization\CreateOrganization;
 use PetMatch\Application\Pet\GetPet;
 use PetMatch\Application\Pet\CreatePet;
 use PetMatch\Application\Pet\ArchivePet;
+use PetMatch\Application\Pet\AddPetPhoto;
+use PetMatch\Application\Pet\RemovePetPhoto;
 use PetMatch\Application\Pet\ListPets;
 use PetMatch\Application\Pet\UpdatePet;
 use PetMatch\Infrastructure\Container\Container;
@@ -21,6 +23,7 @@ use PetMatch\Infrastructure\Database\DatabaseConnection;
 use PetMatch\Infrastructure\Http\ApplicationKernel;
 use PetMatch\Infrastructure\Http\Router;
 use PetMatch\Infrastructure\Persistence\PdoPetRepository;
+use PetMatch\Infrastructure\Persistence\PdoPetPhotoRepository;
 use PetMatch\Infrastructure\Persistence\PdoOrganizationRepository;
 use PetMatch\Infrastructure\Persistence\PdoUserRepository;
 use PetMatch\Infrastructure\Security\SessionManager;
@@ -29,6 +32,8 @@ use PetMatch\Presentation\Controllers\AuthenticatedUserController;
 use PetMatch\Presentation\Controllers\GetPetController;
 use PetMatch\Presentation\Controllers\CreatePetController;
 use PetMatch\Presentation\Controllers\ArchivePetController;
+use PetMatch\Presentation\Controllers\AddPetPhotoController;
+use PetMatch\Presentation\Controllers\RemovePetPhotoController;
 use PetMatch\Presentation\Controllers\UpdatePetController;
 use PetMatch\Presentation\Controllers\LoginUserController;
 use PetMatch\Presentation\Controllers\LogoutUserController;
@@ -62,6 +67,10 @@ final class ApplicationFactory
             $container->get(PDO::class)
         ));
 
+        $container->set(PdoPetPhotoRepository::class, static fn (Container $container): PdoPetPhotoRepository => new PdoPetPhotoRepository(
+            $container->get(PDO::class)
+        ));
+
         $container->set(RegisterUser::class, static fn (Container $container): RegisterUser => new RegisterUser(
             $container->get(PdoUserRepository::class)
         ));
@@ -86,6 +95,20 @@ final class ApplicationFactory
 
         $container->set(ArchivePet::class, static fn (Container $container): ArchivePet => new ArchivePet(
             $container->get(PdoPetRepository::class),
+            $container->get(PdoUserRepository::class),
+            $container->get(SessionManager::class)
+        ));
+
+        $container->set(AddPetPhoto::class, static fn (Container $container): AddPetPhoto => new AddPetPhoto(
+            $container->get(PdoPetRepository::class),
+            $container->get(PdoPetPhotoRepository::class),
+            $container->get(PdoUserRepository::class),
+            $container->get(SessionManager::class)
+        ));
+
+        $container->set(RemovePetPhoto::class, static fn (Container $container): RemovePetPhoto => new RemovePetPhoto(
+            $container->get(PdoPetRepository::class),
+            $container->get(PdoPetPhotoRepository::class),
             $container->get(PdoUserRepository::class),
             $container->get(SessionManager::class)
         ));
@@ -148,6 +171,14 @@ final class ApplicationFactory
             $container->get(ArchivePet::class)
         ));
 
+        $container->set(AddPetPhotoController::class, static fn (Container $container): AddPetPhotoController => new AddPetPhotoController(
+            $container->get(AddPetPhoto::class)
+        ));
+
+        $container->set(RemovePetPhotoController::class, static fn (Container $container): RemovePetPhotoController => new RemovePetPhotoController(
+            $container->get(RemovePetPhoto::class)
+        ));
+
         $container->set(UpdatePetController::class, static fn (Container $container): UpdatePetController => new UpdatePetController(
             $container->get(UpdatePet::class)
         ));
@@ -165,6 +196,8 @@ final class ApplicationFactory
             'POST /api/v1/pets' => $container->get(CreatePetController::class),
             'PUT /api/v1/pets/{id}' => $container->get(UpdatePetController::class),
             'PATCH /api/v1/pets/{id}/archive' => $container->get(ArchivePetController::class),
+            'POST /api/v1/pets/{id}/photos' => $container->get(AddPetPhotoController::class),
+            'DELETE /api/v1/pets/{id}/photos/{photoId}' => $container->get(RemovePetPhotoController::class),
         ]));
 
         $container->set(ApplicationKernel::class, static fn (Container $container): ApplicationKernel => new ApplicationKernel(
