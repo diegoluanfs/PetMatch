@@ -14,4 +14,6 @@ interface PetRepository
     public function findAll(): array;
 
     public function save(Pet $pet): int;
+
+    public function update(Pet $pet): void;
 }

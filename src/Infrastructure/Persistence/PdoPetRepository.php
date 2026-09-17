@@ -78,6 +78,42 @@ final class PdoPetRepository implements PetRepository
         return (int) $statement->fetchColumn();
     }
 
+    public function update(Pet $pet): void
+    {
+        $statement = $this->pdo->prepare(
+            'UPDATE pets
+             SET name = :name,
+                 description = :description,
+                 animal_type = :animal_type,
+                 breed = :breed,
+                 gender = :gender,
+                 birth_date = :birth_date,
+                 size = :size,
+                 city = :city,
+                 state = :state,
+                 latitude = :latitude,
+                 longitude = :longitude
+             WHERE id = :id
+               AND organization_id = :organization_id'
+        );
+
+        $statement->execute([
+            'id' => $pet->id,
+            'organization_id' => $pet->organizationId,
+            'name' => $pet->name,
+            'description' => $pet->description,
+            'animal_type' => $pet->animalType,
+            'breed' => $pet->breed,
+            'gender' => $pet->gender,
+            'birth_date' => $pet->birthDate,
+            'size' => $pet->size,
+            'city' => $pet->city,
+            'state' => $pet->state,
+            'latitude' => $pet->latitude,
+            'longitude' => $pet->longitude,
+        ]);
+    }
+
     /**
      * @param array<string, mixed> $row
      */

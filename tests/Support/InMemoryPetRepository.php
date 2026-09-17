@@ -83,4 +83,13 @@ final class InMemoryPetRepository implements PetRepository
 
         return $id;
     }
+
+    public function update(Pet $pet): void
+    {
+        if ($pet->id === null) {
+            return;
+        }
+
+        $this->pets[$pet->id] = $pet;
+    }
 }
