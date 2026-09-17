@@ -6,6 +6,8 @@ namespace PetMatch\Domain\User;
 
 interface UserRepository
 {
+    public function findById(int $id): ?User;
+
     public function findByEmail(string $email): ?User;
 
     public function save(User $user): int;

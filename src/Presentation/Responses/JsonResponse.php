@@ -40,6 +40,11 @@ final class JsonResponse
         return new self(401, $payload);
     }
 
+    public static function forbidden(array $payload): self
+    {
+        return new self(403, $payload);
+    }
+
     public static function notFound(): self
     {
         return new self(404, ['error' => 'Not Found']);

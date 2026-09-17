@@ -7,6 +7,8 @@ namespace PetMatch\Infrastructure\Bootstrap;
 use PDO;
 use PetMatch\Application\System\GetHealthStatus;
 use PetMatch\Application\Auth\RegisterUser;
+use PetMatch\Application\Auth\GetAuthenticatedUser;
+use PetMatch\Application\Auth\AuthorizationService;
 use PetMatch\Application\Auth\LoginUser;
 use PetMatch\Infrastructure\Container\Container;
 use PetMatch\Infrastructure\Database\DatabaseConnection;
@@ -15,7 +17,9 @@ use PetMatch\Infrastructure\Http\Router;
 use PetMatch\Infrastructure\Persistence\PdoUserRepository;
 use PetMatch\Infrastructure\Security\SessionManager;
 use PetMatch\Presentation\Controllers\HealthController;
+use PetMatch\Presentation\Controllers\AuthenticatedUserController;
 use PetMatch\Presentation\Controllers\LoginUserController;
+use PetMatch\Presentation\Controllers\LogoutUserController;
 use PetMatch\Presentation\Controllers\RegisterUserController;
 
 final class ApplicationFactory
@@ -44,6 +48,13 @@ final class ApplicationFactory
             $container->get(PdoUserRepository::class)
         ));
 
+        $container->set(AuthorizationService::class, static fn () => new AuthorizationService());
+
+        $container->set(GetAuthenticatedUser::class, static fn (Container $container): GetAuthenticatedUser => new GetAuthenticatedUser(
+            $container->get(PdoUserRepository::class),
+            $container->get(SessionManager::class)
+        ));
+
         $container->set(HealthController::class, static fn (Container $container): HealthController => new HealthController(
             $container->get(GetHealthStatus::class)
         ));
@@ -57,11 +68,21 @@ final class ApplicationFactory
             $container->get(SessionManager::class)
         ));
 
+        $container->set(LogoutUserController::class, static fn (Container $container): LogoutUserController => new LogoutUserController(
+            $container->get(SessionManager::class)
+        ));
+
+        $container->set(AuthenticatedUserController::class, static fn (Container $container): AuthenticatedUserController => new AuthenticatedUserController(
+            $container->get(GetAuthenticatedUser::class)
+        ));
+
         $container->set(Router::class, static fn (Container $container): Router => new Router([
             'GET /health' => $container->get(HealthController::class),
             'GET /' => $container->get(HealthController::class),
             'POST /api/v1/auth/register' => $container->get(RegisterUserController::class),
             'POST /api/v1/auth/login' => $container->get(LoginUserController::class),
+            'GET /api/v1/auth/me' => $container->get(AuthenticatedUserController::class),
+            'POST /api/v1/auth/logout' => $container->get(LogoutUserController::class),
         ]));
 
         $container->set(ApplicationKernel::class, static fn (Container $container): ApplicationKernel => new ApplicationKernel(

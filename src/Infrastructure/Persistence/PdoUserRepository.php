@@ -15,6 +15,32 @@ final class PdoUserRepository implements UserRepository
     ) {
     }
 
+    public function findById(int $id): ?User
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT id, name, email, password_hash, role, status
+             FROM users
+             WHERE id = :id
+             LIMIT 1'
+        );
+        $statement->execute(['id' => $id]);
+
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+
+        if ($row === false) {
+            return null;
+        }
+
+        return new User(
+            (int) $row['id'],
+            $row['name'],
+            $row['email'],
+            $row['password_hash'],
+            $row['role'],
+            $row['status'],
+        );
+    }
+
     public function findByEmail(string $email): ?User
     {
         $statement = $this->pdo->prepare(
