@@ -1,0 +1,11 @@
+/vendor/
+/.idea/
+/.vscode/
+/.phpunit.result.cache
+/.phpstan/
+/.php-cs-fixer.cache
+/.env
+/.env.*
+!/example.env
+/storage/*
+!/storage/.gitkeep
