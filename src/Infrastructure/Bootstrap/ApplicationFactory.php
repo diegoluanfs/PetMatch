@@ -80,11 +80,13 @@ final class ApplicationFactory
         ));
 
         $container->set(ListPets::class, static fn (Container $container): ListPets => new ListPets(
-            $container->get(PdoPetRepository::class)
+            $container->get(PdoPetRepository::class),
+            $container->get(PdoPetPhotoRepository::class)
         ));
 
         $container->set(GetPet::class, static fn (Container $container): GetPet => new GetPet(
-            $container->get(PdoPetRepository::class)
+            $container->get(PdoPetRepository::class),
+            $container->get(PdoPetPhotoRepository::class)
         ));
 
         $container->set(CreatePet::class, static fn (Container $container): CreatePet => new CreatePet(

@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace PetMatch\Application\Pet;
 
+use PetMatch\Domain\Pet\PetPhotoRepository;
 use PetMatch\Domain\Pet\PetRepository;
 
 final class GetPet
 {
     public function __construct(
         private readonly PetRepository $petRepository,
+        private readonly PetPhotoRepository $petPhotoRepository,
     ) {
     }
 
@@ -23,6 +25,16 @@ final class GetPet
         if ($pet === null) {
             throw new PetNotFoundException('Pet not found.');
         }
+
+        $photos = array_map(
+            static fn ($photo): array => [
+                'id' => $photo->id,
+                'pet_id' => $photo->petId,
+                'path' => $photo->path,
+                'sort_order' => $photo->sortOrder,
+            ],
+            $this->petPhotoRepository->findByPetId($id)
+        );
 
         return [
             'id' => $pet->id,
@@ -39,6 +51,7 @@ final class GetPet
             'state' => $pet->state,
             'latitude' => $pet->latitude,
             'longitude' => $pet->longitude,
+            'photos' => $photos,
         ];
     }
 }
