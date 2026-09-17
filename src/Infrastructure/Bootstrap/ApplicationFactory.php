@@ -10,10 +10,12 @@ use PetMatch\Application\Auth\RegisterUser;
 use PetMatch\Application\Auth\GetAuthenticatedUser;
 use PetMatch\Application\Auth\AuthorizationService;
 use PetMatch\Application\Auth\LoginUser;
+use PetMatch\Application\Organization\CreateOrganization;
 use PetMatch\Infrastructure\Container\Container;
 use PetMatch\Infrastructure\Database\DatabaseConnection;
 use PetMatch\Infrastructure\Http\ApplicationKernel;
 use PetMatch\Infrastructure\Http\Router;
+use PetMatch\Infrastructure\Persistence\PdoOrganizationRepository;
 use PetMatch\Infrastructure\Persistence\PdoUserRepository;
 use PetMatch\Infrastructure\Security\SessionManager;
 use PetMatch\Presentation\Controllers\HealthController;
@@ -21,6 +23,7 @@ use PetMatch\Presentation\Controllers\AuthenticatedUserController;
 use PetMatch\Presentation\Controllers\LoginUserController;
 use PetMatch\Presentation\Controllers\LogoutUserController;
 use PetMatch\Presentation\Controllers\RegisterUserController;
+use PetMatch\Presentation\Controllers\CreateOrganizationController;
 
 final class ApplicationFactory
 {
@@ -40,8 +43,16 @@ final class ApplicationFactory
             $container->get(PDO::class)
         ));
 
+        $container->set(PdoOrganizationRepository::class, static fn (Container $container): PdoOrganizationRepository => new PdoOrganizationRepository(
+            $container->get(PDO::class)
+        ));
+
         $container->set(RegisterUser::class, static fn (Container $container): RegisterUser => new RegisterUser(
             $container->get(PdoUserRepository::class)
+        ));
+
+        $container->set(CreateOrganization::class, static fn (Container $container): CreateOrganization => new CreateOrganization(
+            $container->get(PdoOrganizationRepository::class)
         ));
 
         $container->set(LoginUser::class, static fn (Container $container): LoginUser => new LoginUser(
@@ -76,6 +87,10 @@ final class ApplicationFactory
             $container->get(GetAuthenticatedUser::class)
         ));
 
+        $container->set(CreateOrganizationController::class, static fn (Container $container): CreateOrganizationController => new CreateOrganizationController(
+            $container->get(CreateOrganization::class)
+        ));
+
         $container->set(Router::class, static fn (Container $container): Router => new Router([
             'GET /health' => $container->get(HealthController::class),
             'GET /' => $container->get(HealthController::class),
@@ -83,6 +98,7 @@ final class ApplicationFactory
             'POST /api/v1/auth/login' => $container->get(LoginUserController::class),
             'GET /api/v1/auth/me' => $container->get(AuthenticatedUserController::class),
             'POST /api/v1/auth/logout' => $container->get(LogoutUserController::class),
+            'POST /api/v1/organizations' => $container->get(CreateOrganizationController::class),
         ]));
 
         $container->set(ApplicationKernel::class, static fn (Container $container): ApplicationKernel => new ApplicationKernel(
