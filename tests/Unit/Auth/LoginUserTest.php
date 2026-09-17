@@ -17,6 +17,7 @@ final class LoginUserTest extends TestCase
         $repository = new InMemoryUserRepository();
         $repository->save(new User(
             null,
+            null,
             'Maria',
             'maria.teste@example.com',
             password_hash('secret123', PASSWORD_DEFAULT),
@@ -37,6 +38,7 @@ final class LoginUserTest extends TestCase
     {
         $repository = new InMemoryUserRepository();
         $repository->save(new User(
+            null,
             null,
             'Maria',
             'maria.teste@example.com',

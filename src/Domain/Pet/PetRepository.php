@@ -12,4 +12,6 @@ interface PetRepository
      * @return list<Pet>
      */
     public function findAll(): array;
+
+    public function save(Pet $pet): int;
 }

@@ -12,6 +12,7 @@ use PetMatch\Application\Auth\AuthorizationService;
 use PetMatch\Application\Auth\LoginUser;
 use PetMatch\Application\Organization\CreateOrganization;
 use PetMatch\Application\Pet\GetPet;
+use PetMatch\Application\Pet\CreatePet;
 use PetMatch\Application\Pet\ListPets;
 use PetMatch\Infrastructure\Container\Container;
 use PetMatch\Infrastructure\Database\DatabaseConnection;
@@ -24,6 +25,7 @@ use PetMatch\Infrastructure\Security\SessionManager;
 use PetMatch\Presentation\Controllers\HealthController;
 use PetMatch\Presentation\Controllers\AuthenticatedUserController;
 use PetMatch\Presentation\Controllers\GetPetController;
+use PetMatch\Presentation\Controllers\CreatePetController;
 use PetMatch\Presentation\Controllers\LoginUserController;
 use PetMatch\Presentation\Controllers\LogoutUserController;
 use PetMatch\Presentation\Controllers\ListPetsController;
@@ -72,6 +74,12 @@ final class ApplicationFactory
             $container->get(PdoPetRepository::class)
         ));
 
+        $container->set(CreatePet::class, static fn (Container $container): CreatePet => new CreatePet(
+            $container->get(PdoPetRepository::class),
+            $container->get(PdoUserRepository::class),
+            $container->get(SessionManager::class)
+        ));
+
         $container->set(LoginUser::class, static fn (Container $container): LoginUser => new LoginUser(
             $container->get(PdoUserRepository::class)
         ));
@@ -116,6 +124,10 @@ final class ApplicationFactory
             $container->get(GetPet::class)
         ));
 
+        $container->set(CreatePetController::class, static fn (Container $container): CreatePetController => new CreatePetController(
+            $container->get(CreatePet::class)
+        ));
+
         $container->set(Router::class, static fn (Container $container): Router => new Router([
             'GET /health' => $container->get(HealthController::class),
             'GET /' => $container->get(HealthController::class),
@@ -126,6 +138,7 @@ final class ApplicationFactory
             'POST /api/v1/organizations' => $container->get(CreateOrganizationController::class),
             'GET /api/v1/pets' => $container->get(ListPetsController::class),
             'GET /api/v1/pets/{id}' => $container->get(GetPetController::class),
+            'POST /api/v1/pets' => $container->get(CreatePetController::class),
         ]));
 
         $container->set(ApplicationKernel::class, static fn (Container $container): ApplicationKernel => new ApplicationKernel(

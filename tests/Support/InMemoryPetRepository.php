@@ -60,4 +60,27 @@ final class InMemoryPetRepository implements PetRepository
     {
         return array_values($this->pets);
     }
+
+    public function save(Pet $pet): int
+    {
+        $id = count($this->pets) + 1;
+        $this->pets[$id] = new Pet(
+            $id,
+            $pet->organizationId,
+            $pet->name,
+            $pet->description,
+            $pet->animalType,
+            $pet->breed,
+            $pet->gender,
+            $pet->birthDate,
+            $pet->size,
+            $pet->status,
+            $pet->city,
+            $pet->state,
+            $pet->latitude,
+            $pet->longitude,
+        );
+
+        return $id;
+    }
 }

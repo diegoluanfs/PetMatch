@@ -24,6 +24,7 @@ final class GetAuthenticatedUserTest extends TestCase
         $repository = new InMemoryUserRepository();
         $userId = $repository->save(new User(
             null,
+            null,
             'Maria',
             'maria.teste@example.com',
             password_hash('secret123', PASSWORD_DEFAULT),

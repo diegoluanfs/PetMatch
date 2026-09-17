@@ -51,6 +51,33 @@ final class PdoPetRepository implements PetRepository
         return $pets;
     }
 
+    public function save(Pet $pet): int
+    {
+        $statement = $this->pdo->prepare(
+            'INSERT INTO pets (organization_id, name, description, animal_type, breed, gender, birth_date, size, status, city, state, latitude, longitude)
+             VALUES (:organization_id, :name, :description, :animal_type, :breed, :gender, :birth_date, :size, :status, :city, :state, :latitude, :longitude)
+             RETURNING id'
+        );
+
+        $statement->execute([
+            'organization_id' => $pet->organizationId,
+            'name' => $pet->name,
+            'description' => $pet->description,
+            'animal_type' => $pet->animalType,
+            'breed' => $pet->breed,
+            'gender' => $pet->gender,
+            'birth_date' => $pet->birthDate,
+            'size' => $pet->size,
+            'status' => $pet->status,
+            'city' => $pet->city,
+            'state' => $pet->state,
+            'latitude' => $pet->latitude,
+            'longitude' => $pet->longitude,
+        ]);
+
+        return (int) $statement->fetchColumn();
+    }
+
     /**
      * @param array<string, mixed> $row
      */

@@ -18,7 +18,7 @@ final class PdoUserRepository implements UserRepository
     public function findById(int $id): ?User
     {
         $statement = $this->pdo->prepare(
-            'SELECT id, name, email, password_hash, role, status
+            'SELECT id, organization_id, name, email, password_hash, role, status
              FROM users
              WHERE id = :id
              LIMIT 1'
@@ -33,6 +33,7 @@ final class PdoUserRepository implements UserRepository
 
         return new User(
             (int) $row['id'],
+            $row['organization_id'] !== null ? (int) $row['organization_id'] : null,
             $row['name'],
             $row['email'],
             $row['password_hash'],
@@ -44,7 +45,7 @@ final class PdoUserRepository implements UserRepository
     public function findByEmail(string $email): ?User
     {
         $statement = $this->pdo->prepare(
-            'SELECT id, name, email, password_hash, role, status
+            'SELECT id, organization_id, name, email, password_hash, role, status
              FROM users
              WHERE lower(email) = lower(:email)
              LIMIT 1'
@@ -59,6 +60,7 @@ final class PdoUserRepository implements UserRepository
 
         return new User(
             (int) $row['id'],
+            $row['organization_id'] !== null ? (int) $row['organization_id'] : null,
             $row['name'],
             $row['email'],
             $row['password_hash'],
@@ -70,12 +72,13 @@ final class PdoUserRepository implements UserRepository
     public function save(User $user): int
     {
         $statement = $this->pdo->prepare(
-            'INSERT INTO users (name, email, password_hash, role, status)
-             VALUES (:name, :email, :password_hash, :role, :status)
+            'INSERT INTO users (organization_id, name, email, password_hash, role, status)
+             VALUES (:organization_id, :name, :email, :password_hash, :role, :status)
              RETURNING id'
         );
 
         $statement->execute([
+            'organization_id' => $user->organizationId,
             'name' => $user->name,
             'email' => $user->email,
             'password_hash' => $user->passwordHash,

@@ -8,6 +8,7 @@ final class User
 {
     public function __construct(
         public readonly ?int $id,
+        public readonly ?int $organizationId,
         public readonly string $name,
         public readonly string $email,
         public readonly string $passwordHash,

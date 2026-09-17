@@ -42,6 +42,7 @@ final class RegisterUser
 
         $user = new User(
             null,
+            null,
             $name,
             $email,
             password_hash($password, PASSWORD_DEFAULT),

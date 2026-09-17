@@ -37,6 +37,7 @@ final class InMemoryUserRepository implements UserRepository
         $id = $this->nextId++;
         $this->users[$id] = new User(
             $id,
+            $user->organizationId,
             $user->name,
             $user->email,
             $user->passwordHash,
