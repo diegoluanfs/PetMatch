@@ -7,12 +7,15 @@ namespace PetMatch\Infrastructure\Bootstrap;
 use PDO;
 use PetMatch\Application\System\GetHealthStatus;
 use PetMatch\Application\Auth\RegisterUser;
+use PetMatch\Application\Auth\LoginUser;
 use PetMatch\Infrastructure\Container\Container;
 use PetMatch\Infrastructure\Database\DatabaseConnection;
 use PetMatch\Infrastructure\Http\ApplicationKernel;
 use PetMatch\Infrastructure\Http\Router;
 use PetMatch\Infrastructure\Persistence\PdoUserRepository;
+use PetMatch\Infrastructure\Security\SessionManager;
 use PetMatch\Presentation\Controllers\HealthController;
+use PetMatch\Presentation\Controllers\LoginUserController;
 use PetMatch\Presentation\Controllers\RegisterUserController;
 
 final class ApplicationFactory
@@ -25,6 +28,8 @@ final class ApplicationFactory
 
         $container->set(PDO::class, static fn (Container $container): PDO => $container->get(DatabaseConnection::class)->create());
 
+        $container->set(SessionManager::class, static fn () => new SessionManager());
+
         $container->set(GetHealthStatus::class, static fn () => new GetHealthStatus());
 
         $container->set(PdoUserRepository::class, static fn (Container $container): PdoUserRepository => new PdoUserRepository(
@@ -32,6 +37,10 @@ final class ApplicationFactory
         ));
 
         $container->set(RegisterUser::class, static fn (Container $container): RegisterUser => new RegisterUser(
+            $container->get(PdoUserRepository::class)
+        ));
+
+        $container->set(LoginUser::class, static fn (Container $container): LoginUser => new LoginUser(
             $container->get(PdoUserRepository::class)
         ));
 
@@ -43,10 +52,16 @@ final class ApplicationFactory
             $container->get(RegisterUser::class)
         ));
 
+        $container->set(LoginUserController::class, static fn (Container $container): LoginUserController => new LoginUserController(
+            $container->get(LoginUser::class),
+            $container->get(SessionManager::class)
+        ));
+
         $container->set(Router::class, static fn (Container $container): Router => new Router([
             'GET /health' => $container->get(HealthController::class),
             'GET /' => $container->get(HealthController::class),
             'POST /api/v1/auth/register' => $container->get(RegisterUserController::class),
+            'POST /api/v1/auth/login' => $container->get(LoginUserController::class),
         ]));
 
         $container->set(ApplicationKernel::class, static fn (Container $container): ApplicationKernel => new ApplicationKernel(

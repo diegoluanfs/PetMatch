@@ -35,6 +35,11 @@ final class JsonResponse
         return new self(409, $payload);
     }
 
+    public static function unauthorized(array $payload): self
+    {
+        return new self(401, $payload);
+    }
+
     public static function notFound(): self
     {
         return new self(404, ['error' => 'Not Found']);
