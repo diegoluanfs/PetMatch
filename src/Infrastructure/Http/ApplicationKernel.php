@@ -4,25 +4,17 @@ declare(strict_types=1);
 
 namespace PetMatch\Infrastructure\Http;
 
+use PetMatch\Presentation\Responses\JsonResponse;
+
 final class ApplicationKernel
 {
-    public function handle(string $path): array
-    {
-        if ($path === '/' || $path === '/health') {
-            return [
-                'status' => 200,
-                'body' => [
-                    'name' => 'PetMatch',
-                    'status' => 'ok',
-                ],
-            ];
-        }
+    public function __construct(
+        private readonly Router $router,
+    ) {
+    }
 
-        return [
-            'status' => 404,
-            'body' => [
-                'error' => 'Not Found',
-            ],
-        ];
+    public function handle(Request $request): JsonResponse
+    {
+        return $this->router->dispatch($request);
     }
 }
