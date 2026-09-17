@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PetMatch\Presentation\Responses;
 
-final class JsonResponse
+final class JsonResponse implements Response
 {
     /**
      * @param array<string, mixed> $payload

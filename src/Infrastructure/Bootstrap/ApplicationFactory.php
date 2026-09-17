@@ -28,6 +28,7 @@ use PetMatch\Infrastructure\Persistence\PdoOrganizationRepository;
 use PetMatch\Infrastructure\Persistence\PdoUserRepository;
 use PetMatch\Infrastructure\Security\SessionManager;
 use PetMatch\Presentation\Controllers\HealthController;
+use PetMatch\Presentation\Controllers\DashboardController;
 use PetMatch\Presentation\Controllers\AuthenticatedUserController;
 use PetMatch\Presentation\Controllers\GetPetController;
 use PetMatch\Presentation\Controllers\CreatePetController;
@@ -136,6 +137,8 @@ final class ApplicationFactory
             $container->get(GetHealthStatus::class)
         ));
 
+        $container->set(DashboardController::class, static fn () => new DashboardController());
+
         $container->set(RegisterUserController::class, static fn (Container $container): RegisterUserController => new RegisterUserController(
             $container->get(RegisterUser::class)
         ));
@@ -187,7 +190,8 @@ final class ApplicationFactory
 
         $container->set(Router::class, static fn (Container $container): Router => new Router([
             'GET /health' => $container->get(HealthController::class),
-            'GET /' => $container->get(HealthController::class),
+            'GET /' => $container->get(DashboardController::class),
+            'GET /playground' => $container->get(DashboardController::class),
             'POST /api/v1/auth/register' => $container->get(RegisterUserController::class),
             'POST /api/v1/auth/login' => $container->get(LoginUserController::class),
             'GET /api/v1/auth/me' => $container->get(AuthenticatedUserController::class),

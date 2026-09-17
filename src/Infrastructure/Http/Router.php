@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace PetMatch\Infrastructure\Http;
 
-use PetMatch\Presentation\Responses\JsonResponse;
+use PetMatch\Presentation\Responses\Response;
 
 final class Router
 {
     /**
-     * @param array<string, callable(Request): JsonResponse> $routes
+        * @param array<string, callable(Request): Response> $routes
      */
     public function __construct(
         private readonly array $routes,
     ) {
     }
 
-    public function dispatch(Request $request): JsonResponse
+    public function dispatch(Request $request): Response
     {
         $routeKey = $request->method . ' ' . $request->path;
 
