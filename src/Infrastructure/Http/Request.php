@@ -11,6 +11,8 @@ final class Request
         public readonly string $path,
         public readonly string $body,
         private readonly array $parameters = [],
+        private readonly array $formData = [],
+        private readonly array $files = [],
     ) {
     }
 
@@ -22,6 +24,9 @@ final class Request
             strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET'),
             $path,
             file_get_contents('php://input') ?: '',
+            [],
+            $_POST,
+            $_FILES,
         );
     }
 
@@ -46,7 +51,31 @@ final class Request
             $this->path,
             $this->body,
             $parameters,
+            $this->formData,
+            $this->files,
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function form(): array
+    {
+        return $this->formData;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function file(string $name): ?array
+    {
+        $file = $this->files[$name] ?? null;
+
+        if (!is_array($file)) {
+            return null;
+        }
+
+        return $file;
     }
 
     /**

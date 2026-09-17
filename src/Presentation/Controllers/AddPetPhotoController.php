@@ -10,6 +10,7 @@ use PetMatch\Application\Auth\NotAuthenticatedException;
 use PetMatch\Application\Pet\AddPetPhoto;
 use PetMatch\Application\Pet\PetNotFoundException;
 use PetMatch\Infrastructure\Http\Request;
+use PetMatch\Infrastructure\Storage\LocalPetPhotoStorage;
 use PetMatch\Presentation\Requests\Pet\AddPetPhotoRequest;
 use PetMatch\Presentation\Responses\JsonResponse;
 
@@ -17,6 +18,7 @@ final class AddPetPhotoController
 {
     public function __construct(
         private readonly AddPetPhoto $addPetPhoto,
+        private readonly LocalPetPhotoStorage $photoStorage,
     ) {
     }
 
@@ -25,6 +27,14 @@ final class AddPetPhotoController
         try {
             $petId = (int) ($request->parameter('id') ?? 0);
             $input = AddPetPhotoRequest::fromRequest($request);
+            $uploadedFile = $request->file('photo');
+
+            if ($uploadedFile !== null) {
+                $input = new AddPetPhotoRequest(array_merge(
+                    $input->input,
+                    ['path' => $this->photoStorage->store($uploadedFile)],
+                ));
+            }
 
             return JsonResponse::created([
                 'data' => $this->addPetPhoto->execute($petId, $input->input),

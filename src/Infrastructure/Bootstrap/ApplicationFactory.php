@@ -26,6 +26,7 @@ use PetMatch\Infrastructure\Persistence\PdoPetRepository;
 use PetMatch\Infrastructure\Persistence\PdoPetPhotoRepository;
 use PetMatch\Infrastructure\Persistence\PdoOrganizationRepository;
 use PetMatch\Infrastructure\Persistence\PdoUserRepository;
+use PetMatch\Infrastructure\Storage\LocalPetPhotoStorage;
 use PetMatch\Infrastructure\Security\SessionManager;
 use PetMatch\Presentation\Controllers\HealthController;
 use PetMatch\Presentation\Controllers\DashboardController;
@@ -70,6 +71,10 @@ final class ApplicationFactory
 
         $container->set(PdoPetPhotoRepository::class, static fn (Container $container): PdoPetPhotoRepository => new PdoPetPhotoRepository(
             $container->get(PDO::class)
+        ));
+
+        $container->set(LocalPetPhotoStorage::class, static fn (): LocalPetPhotoStorage => new LocalPetPhotoStorage(
+            dirname(__DIR__, 3) . '/public/storage/pet-photos'
         ));
 
         $container->set(RegisterUser::class, static fn (Container $container): RegisterUser => new RegisterUser(
@@ -177,7 +182,8 @@ final class ApplicationFactory
         ));
 
         $container->set(AddPetPhotoController::class, static fn (Container $container): AddPetPhotoController => new AddPetPhotoController(
-            $container->get(AddPetPhoto::class)
+            $container->get(AddPetPhoto::class),
+            $container->get(LocalPetPhotoStorage::class)
         ));
 
         $container->set(RemovePetPhotoController::class, static fn (Container $container): RemovePetPhotoController => new RemovePetPhotoController(

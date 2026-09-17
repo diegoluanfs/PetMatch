@@ -542,11 +542,12 @@ final class DashboardController
         }
 
         async function api(path, options = {}) {
+            const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
             const response = await fetch(path, {
                 credentials: 'same-origin',
                 headers: {
-                    'Content-Type': 'application/json',
                     'Accept': 'application/json',
+                    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
                     ...(options.headers || {}),
                 },
                 ...options,
@@ -626,13 +627,16 @@ final class DashboardController
                         <div class="photo-list">${photoMarkup}</div>
                         <div class="stack">
                             <div class="split">
-                                <label>Nova foto
-                                    <input type="text" data-photo-path="${pet.id}" placeholder="/storage/pets/${escapeHtml(pet.id)}-1.jpg">
+                                <label>Arquivo da foto
+                                    <input type="file" accept="image/*" data-photo-file="${pet.id}">
                                 </label>
                                 <label>Ordem
                                     <input type="number" data-photo-order="${pet.id}" min="0" value="0">
                                 </label>
                             </div>
+                            <label>Caminho manual opcional
+                                <input type="text" data-photo-path="${pet.id}" placeholder="/storage/pet-photos/arquivo.jpg">
+                            </label>
                             <div class="hero-actions" style="margin-top: 0;">
                                 <button class="button button-primary" type="button" data-add-photo="${pet.id}">Anexar foto</button>
                                 ${archiveButton}
@@ -649,16 +653,25 @@ final class DashboardController
             document.querySelectorAll('[data-add-photo]').forEach((button) => {
                 button.addEventListener('click', async () => {
                     const petId = Number(button.getAttribute('data-add-photo'));
+                    const fileInput = document.querySelector(`[data-photo-file="${petId}"]`);
                     const pathInput = document.querySelector(`[data-photo-path="${petId}"]`);
                     const orderInput = document.querySelector(`[data-photo-order="${petId}"]`);
 
                     try {
+                        const payload = new FormData();
+                        payload.append('sort_order', String(Number(orderInput.value || 0)));
+
+                        const file = fileInput.files && fileInput.files.length > 0 ? fileInput.files[0] : null;
+
+                        if (file) {
+                            payload.append('photo', file);
+                        } else {
+                            payload.append('path', pathInput.value);
+                        }
+
                         const result = await api(`/api/v1/pets/${petId}/photos`, {
                             method: 'POST',
-                            body: JSON.stringify({
-                                path: pathInput.value,
-                                sort_order: Number(orderInput.value || 0),
-                            }),
+                            body: payload,
                         });
 
                         writeLog(JSON.stringify(result, null, 2));

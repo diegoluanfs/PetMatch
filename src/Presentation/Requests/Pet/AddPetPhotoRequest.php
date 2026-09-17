@@ -15,6 +15,6 @@ final class AddPetPhotoRequest
 
     public static function fromRequest(Request $request): self
     {
-        return new self($request->json());
+        return new self(array_merge($request->json(), $request->form()));
     }
 }
