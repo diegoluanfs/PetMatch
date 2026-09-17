@@ -6,8 +6,9 @@ namespace PetMatch\Presentation\Controllers;
 
 use PetMatch\Application\Auth\ForbiddenException;
 use PetMatch\Application\Auth\NotAuthenticatedException;
-use PetMatch\Application\Pet\ArchivePet;
+use PetMatch\Application\Pet\PetCannotBeArchivedException;
 use PetMatch\Application\Pet\PetNotFoundException;
+use PetMatch\Application\Pet\ArchivePet;
 use PetMatch\Infrastructure\Http\Request;
 use PetMatch\Presentation\Responses\JsonResponse;
 
@@ -36,6 +37,10 @@ final class ArchivePetController
             ]);
         } catch (PetNotFoundException $exception) {
             return JsonResponse::notFoundWithMessage($exception->getMessage());
+        } catch (PetCannotBeArchivedException $exception) {
+            return JsonResponse::conflict([
+                'error' => $exception->getMessage(),
+            ]);
         }
     }
 }

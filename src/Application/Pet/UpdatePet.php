@@ -52,6 +52,10 @@ final class UpdatePet
             throw new ForbiddenException('You can only manage your own pets.');
         }
 
+        if ($pet->status !== 'available') {
+            throw new ForbiddenException('Only available pets can be updated.');
+        }
+
         $name = trim((string) ($input['name'] ?? ''));
         $description = trim((string) ($input['description'] ?? ''));
         $animalType = trim((string) ($input['animal_type'] ?? ''));

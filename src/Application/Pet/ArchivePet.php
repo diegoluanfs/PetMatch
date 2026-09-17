@@ -6,6 +6,7 @@ namespace PetMatch\Application\Pet;
 
 use PetMatch\Application\Auth\ForbiddenException;
 use PetMatch\Application\Auth\NotAuthenticatedException;
+use PetMatch\Domain\Pet\Pet;
 use PetMatch\Domain\Pet\PetRepository;
 use PetMatch\Domain\User\UserRepository;
 use PetMatch\Infrastructure\Security\SessionManager;
@@ -50,7 +51,15 @@ final class ArchivePet
             throw new ForbiddenException('You can only manage your own pets.');
         }
 
-        $archivedPet = new \PetMatch\Domain\Pet\Pet(
+        if ($pet->status === 'archived') {
+            throw new PetCannotBeArchivedException('Pet is already archived.');
+        }
+
+        if ($pet->status === 'adopted') {
+            throw new PetCannotBeArchivedException('Adopted pets cannot be archived.');
+        }
+
+        $archivedPet = new Pet(
             $pet->id,
             $pet->organizationId,
             $pet->name,

@@ -13,9 +13,9 @@ use PetMatch\Application\Auth\LoginUser;
 use PetMatch\Application\Organization\CreateOrganization;
 use PetMatch\Application\Pet\GetPet;
 use PetMatch\Application\Pet\CreatePet;
+use PetMatch\Application\Pet\ArchivePet;
 use PetMatch\Application\Pet\ListPets;
 use PetMatch\Application\Pet\UpdatePet;
-use PetMatch\Application\Pet\ArchivePet;
 use PetMatch\Infrastructure\Container\Container;
 use PetMatch\Infrastructure\Database\DatabaseConnection;
 use PetMatch\Infrastructure\Http\ApplicationKernel;
@@ -28,8 +28,8 @@ use PetMatch\Presentation\Controllers\HealthController;
 use PetMatch\Presentation\Controllers\AuthenticatedUserController;
 use PetMatch\Presentation\Controllers\GetPetController;
 use PetMatch\Presentation\Controllers\CreatePetController;
-use PetMatch\Presentation\Controllers\UpdatePetController;
 use PetMatch\Presentation\Controllers\ArchivePetController;
+use PetMatch\Presentation\Controllers\UpdatePetController;
 use PetMatch\Presentation\Controllers\LoginUserController;
 use PetMatch\Presentation\Controllers\LogoutUserController;
 use PetMatch\Presentation\Controllers\ListPetsController;
@@ -84,13 +84,13 @@ final class ApplicationFactory
             $container->get(SessionManager::class)
         ));
 
-        $container->set(UpdatePet::class, static fn (Container $container): UpdatePet => new UpdatePet(
+        $container->set(ArchivePet::class, static fn (Container $container): ArchivePet => new ArchivePet(
             $container->get(PdoPetRepository::class),
             $container->get(PdoUserRepository::class),
             $container->get(SessionManager::class)
         ));
 
-        $container->set(ArchivePet::class, static fn (Container $container): ArchivePet => new ArchivePet(
+        $container->set(UpdatePet::class, static fn (Container $container): UpdatePet => new UpdatePet(
             $container->get(PdoPetRepository::class),
             $container->get(PdoUserRepository::class),
             $container->get(SessionManager::class)
@@ -144,12 +144,12 @@ final class ApplicationFactory
             $container->get(CreatePet::class)
         ));
 
-        $container->set(UpdatePetController::class, static fn (Container $container): UpdatePetController => new UpdatePetController(
-            $container->get(UpdatePet::class)
-        ));
-
         $container->set(ArchivePetController::class, static fn (Container $container): ArchivePetController => new ArchivePetController(
             $container->get(ArchivePet::class)
+        ));
+
+        $container->set(UpdatePetController::class, static fn (Container $container): UpdatePetController => new UpdatePetController(
+            $container->get(UpdatePet::class)
         ));
 
         $container->set(Router::class, static fn (Container $container): Router => new Router([
