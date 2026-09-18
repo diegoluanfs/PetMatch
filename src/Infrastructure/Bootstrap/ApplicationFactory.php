@@ -5,6 +5,13 @@ declare(strict_types=1);
 namespace PetMatch\Infrastructure\Bootstrap;
 
 use PDO;
+use PetMatch\Application\Adoption\ApproveAdoptionRequest;
+use PetMatch\Application\Adoption\CreateAdoptionRequest;
+use PetMatch\Application\Adoption\ListAdoptionRequests;
+use PetMatch\Application\Adoption\ListOrganizationAdoptionRequests;
+use PetMatch\Application\Adoption\RejectAdoptionRequest;
+use PetMatch\Application\Engagement\SwipePet;
+use PetMatch\Application\Engagement\ListLikedPets;
 use PetMatch\Application\System\GetHealthStatus;
 use PetMatch\Application\Auth\RegisterUser;
 use PetMatch\Application\Auth\GetAuthenticatedUser;
@@ -17,19 +24,23 @@ use PetMatch\Application\Pet\ArchivePet;
 use PetMatch\Application\Pet\AddPetPhoto;
 use PetMatch\Application\Pet\RemovePetPhoto;
 use PetMatch\Application\Pet\ListPets;
+use PetMatch\Application\Pet\ListOrganizationPets;
 use PetMatch\Application\Pet\UpdatePet;
 use PetMatch\Infrastructure\Container\Container;
 use PetMatch\Infrastructure\Database\DatabaseConnection;
 use PetMatch\Infrastructure\Http\ApplicationKernel;
 use PetMatch\Infrastructure\Http\Router;
+use PetMatch\Infrastructure\Persistence\PdoAdoptionRequestRepository;
 use PetMatch\Infrastructure\Persistence\PdoPetRepository;
 use PetMatch\Infrastructure\Persistence\PdoPetPhotoRepository;
 use PetMatch\Infrastructure\Persistence\PdoOrganizationRepository;
 use PetMatch\Infrastructure\Persistence\PdoUserRepository;
+use PetMatch\Infrastructure\Persistence\PdoSwipeRepository;
 use PetMatch\Infrastructure\Storage\LocalPetPhotoStorage;
 use PetMatch\Infrastructure\Security\SessionManager;
 use PetMatch\Presentation\Controllers\HealthController;
 use PetMatch\Presentation\Controllers\DashboardController;
+use PetMatch\Presentation\Controllers\PublicHomeController;
 use PetMatch\Presentation\Controllers\AuthenticatedUserController;
 use PetMatch\Presentation\Controllers\GetPetController;
 use PetMatch\Presentation\Controllers\CreatePetController;
@@ -40,8 +51,16 @@ use PetMatch\Presentation\Controllers\UpdatePetController;
 use PetMatch\Presentation\Controllers\LoginUserController;
 use PetMatch\Presentation\Controllers\LogoutUserController;
 use PetMatch\Presentation\Controllers\ListPetsController;
+use PetMatch\Presentation\Controllers\ListOrganizationPetsController;
 use PetMatch\Presentation\Controllers\RegisterUserController;
 use PetMatch\Presentation\Controllers\CreateOrganizationController;
+use PetMatch\Presentation\Controllers\ApproveAdoptionRequestController;
+use PetMatch\Presentation\Controllers\CreateAdoptionRequestController;
+use PetMatch\Presentation\Controllers\ListAdoptionRequestsController;
+use PetMatch\Presentation\Controllers\ListOrganizationAdoptionRequestsController;
+use PetMatch\Presentation\Controllers\RejectAdoptionRequestController;
+use PetMatch\Presentation\Controllers\SwipePetController;
+use PetMatch\Presentation\Controllers\ListLikedPetsController;
 
 final class ApplicationFactory
 {
@@ -73,6 +92,14 @@ final class ApplicationFactory
             $container->get(PDO::class)
         ));
 
+        $container->set(PdoAdoptionRequestRepository::class, static fn (Container $container): PdoAdoptionRequestRepository => new PdoAdoptionRequestRepository(
+            $container->get(PDO::class)
+        ));
+
+        $container->set(PdoSwipeRepository::class, static fn (Container $container): PdoSwipeRepository => new PdoSwipeRepository(
+            $container->get(PDO::class)
+        ));
+
         $container->set(LocalPetPhotoStorage::class, static fn (): LocalPetPhotoStorage => new LocalPetPhotoStorage(
             dirname(__DIR__, 3) . '/public/storage/pet-photos'
         ));
@@ -88,6 +115,13 @@ final class ApplicationFactory
         $container->set(ListPets::class, static fn (Container $container): ListPets => new ListPets(
             $container->get(PdoPetRepository::class),
             $container->get(PdoPetPhotoRepository::class)
+        ));
+
+        $container->set(ListOrganizationPets::class, static fn (Container $container): ListOrganizationPets => new ListOrganizationPets(
+            $container->get(PdoPetRepository::class),
+            $container->get(PdoPetPhotoRepository::class),
+            $container->get(PdoUserRepository::class),
+            $container->get(SessionManager::class)
         ));
 
         $container->set(GetPet::class, static fn (Container $container): GetPet => new GetPet(
@@ -127,6 +161,49 @@ final class ApplicationFactory
             $container->get(SessionManager::class)
         ));
 
+        $container->set(CreateAdoptionRequest::class, static fn (Container $container): CreateAdoptionRequest => new CreateAdoptionRequest(
+            $container->get(PdoPetRepository::class),
+            $container->get(PdoAdoptionRequestRepository::class),
+            $container->get(PdoUserRepository::class),
+            $container->get(SessionManager::class)
+        ));
+
+        $container->set(ListAdoptionRequests::class, static fn (Container $container): ListAdoptionRequests => new ListAdoptionRequests(
+            $container->get(PdoAdoptionRequestRepository::class),
+            $container->get(SessionManager::class)
+        ));
+
+        $container->set(ListOrganizationAdoptionRequests::class, static fn (Container $container): ListOrganizationAdoptionRequests => new ListOrganizationAdoptionRequests(
+            $container->get(PdoAdoptionRequestRepository::class),
+            $container->get(PdoUserRepository::class),
+            $container->get(SessionManager::class)
+        ));
+
+        $container->set(ApproveAdoptionRequest::class, static fn (Container $container): ApproveAdoptionRequest => new ApproveAdoptionRequest(
+            $container->get(PdoPetRepository::class),
+            $container->get(PdoAdoptionRequestRepository::class),
+            $container->get(PdoUserRepository::class),
+            $container->get(SessionManager::class)
+        ));
+
+        $container->set(RejectAdoptionRequest::class, static fn (Container $container): RejectAdoptionRequest => new RejectAdoptionRequest(
+            $container->get(PdoPetRepository::class),
+            $container->get(PdoAdoptionRequestRepository::class),
+            $container->get(PdoUserRepository::class),
+            $container->get(SessionManager::class)
+        ));
+
+        $container->set(SwipePet::class, static fn (Container $container): SwipePet => new SwipePet(
+            $container->get(PdoPetRepository::class),
+            $container->get(PdoSwipeRepository::class),
+            $container->get(SessionManager::class)
+        ));
+
+        $container->set(ListLikedPets::class, static fn (Container $container): ListLikedPets => new ListLikedPets(
+            $container->get(PdoSwipeRepository::class),
+            $container->get(SessionManager::class)
+        ));
+
         $container->set(LoginUser::class, static fn (Container $container): LoginUser => new LoginUser(
             $container->get(PdoUserRepository::class)
         ));
@@ -143,6 +220,8 @@ final class ApplicationFactory
         ));
 
         $container->set(DashboardController::class, static fn () => new DashboardController());
+
+        $container->set(PublicHomeController::class, static fn () => new PublicHomeController());
 
         $container->set(RegisterUserController::class, static fn (Container $container): RegisterUserController => new RegisterUserController(
             $container->get(RegisterUser::class)
@@ -167,6 +246,10 @@ final class ApplicationFactory
 
         $container->set(ListPetsController::class, static fn (Container $container): ListPetsController => new ListPetsController(
             $container->get(ListPets::class)
+        ));
+
+        $container->set(ListOrganizationPetsController::class, static fn (Container $container): ListOrganizationPetsController => new ListOrganizationPetsController(
+            $container->get(ListOrganizationPets::class)
         ));
 
         $container->set(GetPetController::class, static fn (Container $container): GetPetController => new GetPetController(
@@ -194,9 +277,37 @@ final class ApplicationFactory
             $container->get(UpdatePet::class)
         ));
 
+        $container->set(CreateAdoptionRequestController::class, static fn (Container $container): CreateAdoptionRequestController => new CreateAdoptionRequestController(
+            $container->get(CreateAdoptionRequest::class)
+        ));
+
+        $container->set(ListAdoptionRequestsController::class, static fn (Container $container): ListAdoptionRequestsController => new ListAdoptionRequestsController(
+            $container->get(ListAdoptionRequests::class)
+        ));
+
+        $container->set(ListOrganizationAdoptionRequestsController::class, static fn (Container $container): ListOrganizationAdoptionRequestsController => new ListOrganizationAdoptionRequestsController(
+            $container->get(ListOrganizationAdoptionRequests::class)
+        ));
+
+        $container->set(ApproveAdoptionRequestController::class, static fn (Container $container): ApproveAdoptionRequestController => new ApproveAdoptionRequestController(
+            $container->get(ApproveAdoptionRequest::class)
+        ));
+
+        $container->set(RejectAdoptionRequestController::class, static fn (Container $container): RejectAdoptionRequestController => new RejectAdoptionRequestController(
+            $container->get(RejectAdoptionRequest::class)
+        ));
+
+        $container->set(SwipePetController::class, static fn (Container $container): SwipePetController => new SwipePetController(
+            $container->get(SwipePet::class)
+        ));
+
+        $container->set(ListLikedPetsController::class, static fn (Container $container): ListLikedPetsController => new ListLikedPetsController(
+            $container->get(ListLikedPets::class)
+        ));
+
         $container->set(Router::class, static fn (Container $container): Router => new Router([
             'GET /health' => $container->get(HealthController::class),
-            'GET /' => $container->get(DashboardController::class),
+            'GET /' => $container->get(PublicHomeController::class),
             'GET /playground' => $container->get(DashboardController::class),
             'POST /api/v1/auth/register' => $container->get(RegisterUserController::class),
             'POST /api/v1/auth/login' => $container->get(LoginUserController::class),
@@ -204,12 +315,20 @@ final class ApplicationFactory
             'POST /api/v1/auth/logout' => $container->get(LogoutUserController::class),
             'POST /api/v1/organizations' => $container->get(CreateOrganizationController::class),
             'GET /api/v1/pets' => $container->get(ListPetsController::class),
+            'GET /api/v1/organizations/pets' => $container->get(ListOrganizationPetsController::class),
             'GET /api/v1/pets/{id}' => $container->get(GetPetController::class),
             'POST /api/v1/pets' => $container->get(CreatePetController::class),
             'PUT /api/v1/pets/{id}' => $container->get(UpdatePetController::class),
             'PATCH /api/v1/pets/{id}/archive' => $container->get(ArchivePetController::class),
             'POST /api/v1/pets/{id}/photos' => $container->get(AddPetPhotoController::class),
             'DELETE /api/v1/pets/{id}/photos/{photoId}' => $container->get(RemovePetPhotoController::class),
+            'POST /api/v1/adoption-requests' => $container->get(CreateAdoptionRequestController::class),
+            'GET /api/v1/adoption-requests' => $container->get(ListAdoptionRequestsController::class),
+            'GET /api/v1/organizations/adoption-requests' => $container->get(ListOrganizationAdoptionRequestsController::class),
+            'POST /api/v1/pets/{id}/swipe' => $container->get(SwipePetController::class),
+            'GET /api/v1/me/liked-pets' => $container->get(ListLikedPetsController::class),
+            'PATCH /api/v1/adoption-requests/{id}/approve' => $container->get(ApproveAdoptionRequestController::class),
+            'PATCH /api/v1/adoption-requests/{id}/reject' => $container->get(RejectAdoptionRequestController::class),
         ]));
 
         $container->set(ApplicationKernel::class, static fn (Container $container): ApplicationKernel => new ApplicationKernel(

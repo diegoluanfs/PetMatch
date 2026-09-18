@@ -9,3 +9,6 @@
 !/example.env
 /storage/*
 !/storage/.gitkeep
+/var/
+/public/storage/pet-photos/*
+!/public/storage/pet-photos/.gitkeep

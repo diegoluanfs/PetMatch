@@ -13,6 +13,11 @@ interface PetRepository
      */
     public function findAll(): array;
 
+    /**
+     * @return list<Pet>
+     */
+    public function findAllByOrganizationId(int $organizationId): array;
+
     public function save(Pet $pet): int;
 
     public function update(Pet $pet): void;

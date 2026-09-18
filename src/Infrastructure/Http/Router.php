@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PetMatch\Infrastructure\Http;
 
 use PetMatch\Presentation\Responses\Response;
+use PetMatch\Presentation\Responses\JsonResponse;
 
 final class Router
 {

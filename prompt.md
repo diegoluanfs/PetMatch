@@ -37,6 +37,16 @@ Não reescreva arquivos ou módulos não relacionados. Preserve alterações exi
 
 Ao encontrar um erro, reproduza-o com o menor comando ou teste possível, corrija a causa raiz e execute novamente a mesma verificação antes de ampliar o escopo.
 
+## 1.2 Fluxo público e autenticação
+
+A lista de pets disponíveis deve ser acessível sem autenticação. Visitantes podem visualizar os pets, seus detalhes e fotos, mas não podem executar ações de interação.
+
+As ações de like, dislike e solicitação de adoção exigem uma sessão autenticada. Quando um visitante tentar executar uma dessas ações, a interface deve encaminhá-lo para login ou cadastro e preservar o destino original para que ele retorne ao fluxo após autenticar.
+
+Após o login ou cadastro, usuários adotantes podem interagir com os pets e acompanhar seus interesses e solicitações. Usuários de organizações acessam as ferramentas de gestão dos pets e das solicitações pertencentes à própria organização.
+
+O cadastro público deve criar um usuário adotante com status inicial `pending`. A interface pública não deve expor ferramentas administrativas de organizações para visitantes ou adotantes.
+
 ---
 
 # 2. Stack obrigatória
@@ -367,6 +377,7 @@ Exemplos:
 * somente usuários verificados podem solicitar adoção;
 * uma organização só pode gerenciar seus próprios pets;
 * um pet pode possuir várias fotos;
+* remover um pet do catálogo deve ser uma exclusão lógica: altere o status para `archived` e preserve o registro e seu histórico no banco para auditoria;
 * excluir um pet não deve quebrar histórico de adoção;
 * alterações importantes devem respeitar transações.
 

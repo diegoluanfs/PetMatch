@@ -52,6 +52,22 @@ final class PdoPetRepository implements PetRepository
         return $pets;
     }
 
+    public function findAllByOrganizationId(int $organizationId): array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT id, organization_id, name, description, animal_type, breed, gender, birth_date, size, status, city, state, latitude, longitude
+             FROM pets
+             WHERE organization_id = :organization_id
+             ORDER BY created_at DESC, id DESC'
+        );
+        $statement->execute(['organization_id' => $organizationId]);
+
+        return array_map(
+            fn (array $row): Pet => $this->hydrate($row),
+            $statement->fetchAll(PDO::FETCH_ASSOC),
+        );
+    }
+
     public function save(Pet $pet): int
     {
         $statement = $this->pdo->prepare(

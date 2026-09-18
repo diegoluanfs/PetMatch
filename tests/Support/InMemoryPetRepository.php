@@ -64,6 +64,14 @@ final class InMemoryPetRepository implements PetRepository
         ));
     }
 
+    public function findAllByOrganizationId(int $organizationId): array
+    {
+        return array_values(array_filter(
+            $this->pets,
+            static fn (Pet $pet): bool => $pet->organizationId === $organizationId,
+        ));
+    }
+
     public function save(Pet $pet): int
     {
         $id = count($this->pets) + 1;

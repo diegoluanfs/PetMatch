@@ -25,7 +25,8 @@
   "scripts": {
     "test": "phpunit",
     "analyse": "phpstan analyse",
-    "lint": "php-cs-fixer fix --dry-run --diff"
+    "lint": "php-cs-fixer fix --config=.php-cs-fixer.dist.php --sequential --using-cache=no --dry-run --diff",
+    "seed": "php bin/seed.php"
   },
   "config": {
     "sort-packages": true,

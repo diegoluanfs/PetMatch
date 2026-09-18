@@ -493,7 +493,7 @@ final class DashboardController
                         <div class="toolbar">
                             <div>
                                 <h2>Pets</h2>
-                                <p>Cartões vindos do endpoint público, incluindo fotos e ações de manutenção.</p>
+                                <p>Cartões vindos do endpoint público. Remover um pet do catálogo apenas o arquiva para preservar o histórico.</p>
                             </div>
                             <div class="pill-row">
                                 <div class="pill" id="petCountPill">0 pets</div>
@@ -506,6 +506,21 @@ final class DashboardController
                         <div class="pet-grid" id="petGrid"></div>
                     </div>
                 </section>
+
+                <section class="panel">
+                    <div class="panel-head">
+                        <div class="toolbar">
+                            <div>
+                                <h2>Solicitações de adoção</h2>
+                                <p>Revise os pedidos recebidos para os pets da sua organização.</p>
+                            </div>
+                            <button class="button button-secondary" type="button" id="refreshRequests">Atualizar solicitações</button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="pet-grid" id="requestGrid"></div>
+                    </div>
+                </section>
             </main>
         </div>
     </div>
@@ -514,6 +529,7 @@ final class DashboardController
         const state = {
             me: null,
             pets: [],
+            requests: [],
         };
 
         const elements = {
@@ -526,6 +542,8 @@ final class DashboardController
             sessionButton: document.getElementById('sessionButton'),
             logoutButton: document.getElementById('logoutButton'),
             createPetButton: document.getElementById('createPetButton'),
+            requestGrid: document.getElementById('requestGrid'),
+            refreshRequests: document.getElementById('refreshRequests'),
         };
 
         function escapeHtml(value) {
@@ -598,9 +616,12 @@ final class DashboardController
                 const photoMarkup = photos.length
                     ? photos.map((photo) => `
                         <div class="photo-row">
-                            <div>
-                                <strong>#${photo.sort_order}</strong>
-                                <div class="muted"><code>${escapeHtml(photo.path)}</code></div>
+                            <div style="display:flex; align-items:center; gap:12px; min-width:0; flex:1;">
+                                <img src="${escapeHtml(photo.path)}" alt="Foto do pet ${escapeHtml(pet.name)}" style="width:60px; height:60px; border-radius:12px; object-fit:cover; border: 1px solid rgba(16,32,25,0.08); background:#eef2f0;" />
+                                <div style="min-width:0; overflow:hidden;">
+                                    <strong>#${photo.sort_order}</strong>
+                                    <div class="muted"><code>${escapeHtml(photo.path)}</code></div>
+                                </div>
                             </div>
                             <button class="button button-danger" type="button" data-delete-photo="${pet.id}:${photo.id}">Remover</button>
                         </div>
@@ -609,8 +630,8 @@ final class DashboardController
 
                 const statusClass = pet.status === 'archived' ? 'tag is-archived' : 'tag';
                 const archiveButton = pet.status === 'available'
-                    ? `<button class="button button-secondary" type="button" data-archive-pet="${pet.id}">Arquivar pet</button>`
-                    : `<button class="button button-secondary" type="button" disabled>Arquivado</button>`;
+                    ? `<button class="button button-secondary" type="button" data-remove-pet="${pet.id}">Remover do catálogo</button>`
+                    : `<button class="button button-secondary" type="button" disabled>Removido do catálogo</button>`;
 
                 return `
                     <article class="pet-card">
@@ -647,6 +668,41 @@ final class DashboardController
             }).join('');
 
             bindPetActions();
+        }
+
+        function renderRequests() {
+            if (!state.requests.length) {
+                elements.requestGrid.innerHTML = '<div class="empty">Nenhuma solicitação recebida para os seus pets.</div>';
+                return;
+            }
+
+            elements.requestGrid.innerHTML = state.requests.map((request) => {
+                const pendingActions = request.status === 'pending'
+                    ? `<div class="hero-actions" style="margin-top: 0;"><button class="button button-primary" type="button" data-approve-request="${request.id}">Aprovar</button><button class="button button-danger" type="button" data-reject-request="${request.id}">Rejeitar</button></div>`
+                    : '';
+
+                return `<article class="pet-card"><div><h3>${escapeHtml(request.pet_name || `Pet #${request.pet_id}`)}</h3><div class="pet-meta"><span class="tag">${escapeHtml(request.status)}</span><span class="tag">solicitação #${request.id}</span></div></div><p class="muted" style="margin: 0; line-height: 1.55;">${escapeHtml(request.message || 'Sem mensagem enviada.')}</p>${pendingActions}</article>`;
+            }).join('');
+
+            bindRequestActions();
+        }
+
+        function bindRequestActions() {
+            document.querySelectorAll('[data-approve-request], [data-reject-request]').forEach((button) => {
+                button.addEventListener('click', async () => {
+                    const requestId = button.getAttribute('data-approve-request') || button.getAttribute('data-reject-request');
+                    const action = button.hasAttribute('data-approve-request') ? 'approve' : 'reject';
+
+                    try {
+                        const result = await api(`/api/v1/adoption-requests/${requestId}/${action}`, { method: 'PATCH' });
+                        writeLog(JSON.stringify(result, null, 2));
+                        await loadRequests();
+                        await loadPets();
+                    } catch (error) {
+                        writeLog(`Erro ao ${action === 'approve' ? 'aprovar' : 'rejeitar'} solicitação: ${error.message}`);
+                    }
+                });
+            });
         }
 
         function bindPetActions() {
@@ -699,9 +755,13 @@ final class DashboardController
                 });
             });
 
-            document.querySelectorAll('[data-archive-pet]').forEach((button) => {
+            document.querySelectorAll('[data-remove-pet]').forEach((button) => {
                 button.addEventListener('click', async () => {
-                    const petId = button.getAttribute('data-archive-pet');
+                    const petId = button.getAttribute('data-remove-pet');
+
+                    if (!window.confirm('Remover este pet do catálogo? O registro será mantido no banco como arquivado para auditoria.')) {
+                        return;
+                    }
 
                     try {
                         const result = await api(`/api/v1/pets/${petId}/archive`, {
@@ -711,7 +771,7 @@ final class DashboardController
                         writeLog(JSON.stringify(result, null, 2));
                         await loadPets();
                     } catch (error) {
-                        writeLog(`Erro ao arquivar pet: ${error.message}`);
+                        writeLog(`Erro ao remover pet do catálogo: ${error.message}`);
                     }
                 });
             });
@@ -729,12 +789,23 @@ final class DashboardController
 
         async function loadPets() {
             try {
-                const result = await api('/api/v1/pets', { method: 'GET' });
+                const result = await api('/api/v1/organizations/pets', { method: 'GET' });
                 state.pets = Array.isArray(result.data) ? result.data : [];
                 renderPets();
             } catch (error) {
                 state.pets = [];
                 elements.petGrid.innerHTML = `<div class="empty">Falha ao carregar pets: ${escapeHtml(error.message)}</div>`;
+            }
+        }
+
+        async function loadRequests() {
+            try {
+                const result = await api('/api/v1/organizations/adoption-requests', { method: 'GET' });
+                state.requests = Array.isArray(result.data) ? result.data : [];
+                renderRequests();
+            } catch (error) {
+                state.requests = [];
+                elements.requestGrid.innerHTML = `<div class="empty">Faça login como organização para visualizar solicitações: ${escapeHtml(error.message)}</div>`;
             }
         }
 
@@ -751,6 +822,7 @@ final class DashboardController
                 writeLog(JSON.stringify(result, null, 2));
                 await loadSession();
                 await loadPets();
+                await loadRequests();
             } catch (error) {
                 writeLog(`Erro no login: ${error.message}`);
             }
@@ -761,6 +833,7 @@ final class DashboardController
                 const result = await api('/api/v1/auth/logout', { method: 'POST', body: JSON.stringify({}) });
                 writeLog(JSON.stringify(result, null, 2));
                 await loadSession();
+                await loadRequests();
             } catch (error) {
                 writeLog(`Erro no logout: ${error.message}`);
             }
@@ -797,9 +870,11 @@ final class DashboardController
         elements.logoutButton.addEventListener('click', logout);
         elements.createPetButton.addEventListener('click', createPet);
         elements.refreshPets.addEventListener('click', loadPets);
+        elements.refreshRequests.addEventListener('click', loadRequests);
 
         renderSession();
         loadPets();
+        loadRequests();
     </script>
 </body>
 </html>

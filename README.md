@@ -4,7 +4,7 @@ Base inicial do projeto de adoção de pets em PHP moderno.
 
 ## Etapa atual
 
-Etapa 1: arquitetura, domínio e banco.
+MVP funcional: catálogo público, autenticação, likes/pass, interesses, solicitações de adoção e gestão pela organização.
 
 ## Estrutura
 
@@ -38,4 +38,26 @@ Depois instale as dependências e execute as migrations de dentro do container d
 docker compose run --rm app composer install
 docker compose run --rm app php bin/migrate.php
 docker compose run --rm app php bin/verify-schema.php
+```
+
+Para criar dados locais reproduzíveis para demonstração:
+
+```bash
+docker compose run --rm app php bin/seed.php
+```
+
+Credenciais locais:
+
+- Organização: `ong.admin@example.com` / `secret123`
+- Adotante: `maria@example.com` / `secret123`
+
+Interfaces:
+
+- Catálogo público: `http://localhost:8080/`
+- Área de testes da organização: `http://localhost:8080/playground`
+
+Execute a suíte automatizada com:
+
+```bash
+composer test
 ```
