@@ -31,4 +31,24 @@ final class PdoUserVerificationRepository implements UserVerificationRepository
 
         return $statement->fetchColumn() !== false;
     }
+
+    public function findByUserId(int $userId): array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT type, status, verified_at
+             FROM user_verifications
+             WHERE user_id = :user_id
+             ORDER BY type ASC'
+        );
+        $statement->execute(['user_id' => $userId]);
+
+        return array_map(
+            static fn (array $row): array => [
+                'type' => (string) $row['type'],
+                'status' => (string) $row['status'],
+                'verified_at' => $row['verified_at'] !== null ? (string) $row['verified_at'] : null,
+            ],
+            $statement->fetchAll(PDO::FETCH_ASSOC),
+        );
+    }
 }

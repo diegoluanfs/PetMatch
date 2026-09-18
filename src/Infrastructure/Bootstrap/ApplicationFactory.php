@@ -17,6 +17,7 @@ use PetMatch\Application\Auth\RegisterUser;
 use PetMatch\Application\Auth\GetAuthenticatedUser;
 use PetMatch\Application\Auth\AuthorizationService;
 use PetMatch\Application\Auth\LoginUser;
+use PetMatch\Application\Auth\ListUserVerifications;
 use PetMatch\Application\Organization\CreateOrganization;
 use PetMatch\Application\Pet\GetPet;
 use PetMatch\Application\Pet\CreatePet;
@@ -51,6 +52,7 @@ use PetMatch\Presentation\Controllers\AddPetPhotoController;
 use PetMatch\Presentation\Controllers\RemovePetPhotoController;
 use PetMatch\Presentation\Controllers\UpdatePetController;
 use PetMatch\Presentation\Controllers\LoginUserController;
+use PetMatch\Presentation\Controllers\ListUserVerificationsController;
 use PetMatch\Presentation\Controllers\LogoutUserController;
 use PetMatch\Presentation\Controllers\ListPetsController;
 use PetMatch\Presentation\Controllers\ListOrganizationPetsController;
@@ -227,6 +229,11 @@ final class ApplicationFactory
             $container->get(SessionManager::class)
         ));
 
+        $container->set(ListUserVerifications::class, static fn (Container $container): ListUserVerifications => new ListUserVerifications(
+            $container->get(PdoUserVerificationRepository::class),
+            $container->get(SessionManager::class)
+        ));
+
         $container->set(HealthController::class, static fn (Container $container): HealthController => new HealthController(
             $container->get(GetHealthStatus::class)
         ));
@@ -250,6 +257,10 @@ final class ApplicationFactory
 
         $container->set(AuthenticatedUserController::class, static fn (Container $container): AuthenticatedUserController => new AuthenticatedUserController(
             $container->get(GetAuthenticatedUser::class)
+        ));
+
+        $container->set(ListUserVerificationsController::class, static fn (Container $container): ListUserVerificationsController => new ListUserVerificationsController(
+            $container->get(ListUserVerifications::class)
         ));
 
         $container->set(CreateOrganizationController::class, static fn (Container $container): CreateOrganizationController => new CreateOrganizationController(
@@ -324,6 +335,7 @@ final class ApplicationFactory
             'POST /api/v1/auth/register' => $container->get(RegisterUserController::class),
             'POST /api/v1/auth/login' => $container->get(LoginUserController::class),
             'GET /api/v1/auth/me' => $container->get(AuthenticatedUserController::class),
+            'GET /api/v1/auth/verifications' => $container->get(ListUserVerificationsController::class),
             'POST /api/v1/auth/logout' => $container->get(LogoutUserController::class),
             'POST /api/v1/organizations' => $container->get(CreateOrganizationController::class),
             'GET /api/v1/pets' => $container->get(ListPetsController::class),
