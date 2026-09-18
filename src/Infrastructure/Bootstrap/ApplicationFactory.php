@@ -10,6 +10,7 @@ use PetMatch\Application\Adoption\CreateAdoptionRequest;
 use PetMatch\Application\Adoption\ListAdoptionRequests;
 use PetMatch\Application\Adoption\ListOrganizationAdoptionRequests;
 use PetMatch\Application\Adoption\RejectAdoptionRequest;
+use PetMatch\Application\Adoption\WithdrawAdoptionRequest;
 use PetMatch\Application\Engagement\SwipePet;
 use PetMatch\Application\Engagement\ListLikedPets;
 use PetMatch\Application\System\GetHealthStatus;
@@ -63,6 +64,7 @@ use PetMatch\Presentation\Controllers\CreateAdoptionRequestController;
 use PetMatch\Presentation\Controllers\ListAdoptionRequestsController;
 use PetMatch\Presentation\Controllers\ListOrganizationAdoptionRequestsController;
 use PetMatch\Presentation\Controllers\RejectAdoptionRequestController;
+use PetMatch\Presentation\Controllers\WithdrawAdoptionRequestController;
 use PetMatch\Presentation\Controllers\SwipePetController;
 use PetMatch\Presentation\Controllers\ListLikedPetsController;
 
@@ -207,6 +209,11 @@ final class ApplicationFactory
             $container->get(SessionManager::class)
         ));
 
+        $container->set(WithdrawAdoptionRequest::class, static fn (Container $container): WithdrawAdoptionRequest => new WithdrawAdoptionRequest(
+            $container->get(PdoAdoptionRequestRepository::class),
+            $container->get(SessionManager::class)
+        ));
+
         $container->set(SwipePet::class, static fn (Container $container): SwipePet => new SwipePet(
             $container->get(PdoPetRepository::class),
             $container->get(PdoSwipeRepository::class),
@@ -320,6 +327,10 @@ final class ApplicationFactory
             $container->get(RejectAdoptionRequest::class)
         ));
 
+        $container->set(WithdrawAdoptionRequestController::class, static fn (Container $container): WithdrawAdoptionRequestController => new WithdrawAdoptionRequestController(
+            $container->get(WithdrawAdoptionRequest::class)
+        ));
+
         $container->set(SwipePetController::class, static fn (Container $container): SwipePetController => new SwipePetController(
             $container->get(SwipePet::class)
         ));
@@ -353,6 +364,7 @@ final class ApplicationFactory
             'GET /api/v1/me/liked-pets' => $container->get(ListLikedPetsController::class),
             'PATCH /api/v1/adoption-requests/{id}/approve' => $container->get(ApproveAdoptionRequestController::class),
             'PATCH /api/v1/adoption-requests/{id}/reject' => $container->get(RejectAdoptionRequestController::class),
+            'PATCH /api/v1/adoption-requests/{id}/withdraw' => $container->get(WithdrawAdoptionRequestController::class),
         ]));
 
         $container->set(ApplicationKernel::class, static fn (Container $container): ApplicationKernel => new ApplicationKernel(
