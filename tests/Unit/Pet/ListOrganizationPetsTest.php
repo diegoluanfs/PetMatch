@@ -33,7 +33,8 @@ final class ListOrganizationPetsTest extends TestCase
         $session = new SessionManager();
         $session->setUserId($adminId);
 
-        $result = new ListOrganizationPets($pets, new InMemoryPetPhotoRepository(), $users, $session)->execute();
+        $useCase = new ListOrganizationPets($pets, new InMemoryPetPhotoRepository(), $users, $session);
+        $result = $useCase->execute();
 
         self::assertCount(3, $result);
         self::assertContains('archived', array_column($result, 'status'));
@@ -47,12 +48,14 @@ final class ListOrganizationPetsTest extends TestCase
         $session->setUserId($userId);
 
         $this->expectException(ForbiddenException::class);
-        new ListOrganizationPets(new InMemoryPetRepository(), new InMemoryPetPhotoRepository(), $users, $session)->execute();
+        $useCase = new ListOrganizationPets(new InMemoryPetRepository(), new InMemoryPetPhotoRepository(), $users, $session);
+        $useCase->execute();
     }
 
     public function test_requires_authentication(): void
     {
         $this->expectException(NotAuthenticatedException::class);
-        new ListOrganizationPets(new InMemoryPetRepository(), new InMemoryPetPhotoRepository(), new InMemoryUserRepository(), new SessionManager())->execute();
+        $useCase = new ListOrganizationPets(new InMemoryPetRepository(), new InMemoryPetPhotoRepository(), new InMemoryUserRepository(), new SessionManager());
+        $useCase->execute();
     }
 }

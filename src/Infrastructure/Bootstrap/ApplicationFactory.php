@@ -28,6 +28,7 @@ use PetMatch\Application\Pet\ListOrganizationPets;
 use PetMatch\Application\Pet\UpdatePet;
 use PetMatch\Infrastructure\Container\Container;
 use PetMatch\Infrastructure\Database\DatabaseConnection;
+use PetMatch\Infrastructure\Database\PdoTransactionManager;
 use PetMatch\Infrastructure\Http\ApplicationKernel;
 use PetMatch\Infrastructure\Http\Router;
 use PetMatch\Infrastructure\Persistence\PdoAdoptionRequestRepository;
@@ -71,6 +72,10 @@ final class ApplicationFactory
         $container->set(DatabaseConnection::class, static fn () => new DatabaseConnection());
 
         $container->set(PDO::class, static fn (Container $container): PDO => $container->get(DatabaseConnection::class)->create());
+
+        $container->set(PdoTransactionManager::class, static fn (Container $container): PdoTransactionManager => new PdoTransactionManager(
+            $container->get(PDO::class)
+        ));
 
         $container->set(SessionManager::class, static fn () => new SessionManager());
 
@@ -183,7 +188,8 @@ final class ApplicationFactory
             $container->get(PdoPetRepository::class),
             $container->get(PdoAdoptionRequestRepository::class),
             $container->get(PdoUserRepository::class),
-            $container->get(SessionManager::class)
+            $container->get(SessionManager::class),
+            $container->get(PdoTransactionManager::class)
         ));
 
         $container->set(RejectAdoptionRequest::class, static fn (Container $container): RejectAdoptionRequest => new RejectAdoptionRequest(

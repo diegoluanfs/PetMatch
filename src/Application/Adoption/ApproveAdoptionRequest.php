@@ -6,6 +6,7 @@ namespace PetMatch\Application\Adoption;
 
 use PetMatch\Application\Auth\ForbiddenException;
 use PetMatch\Application\Auth\NotAuthenticatedException;
+use PetMatch\Application\Transaction\TransactionManager;
 use PetMatch\Domain\Adoption\AdoptionRequest;
 use PetMatch\Domain\Adoption\AdoptionRequestRepository;
 use PetMatch\Domain\Pet\Pet;
@@ -20,6 +21,7 @@ final class ApproveAdoptionRequest
         private readonly AdoptionRequestRepository $adoptionRequestRepository,
         private readonly UserRepository $userRepository,
         private readonly SessionManager $sessionManager,
+        private readonly ?TransactionManager $transactionManager = null,
     ) {
     }
 
@@ -44,61 +46,70 @@ final class ApproveAdoptionRequest
             throw new ForbiddenException('Only organization users can approve adoption requests.');
         }
 
-        $request = $this->adoptionRequestRepository->findById($requestId);
+        $this->transactionManager?->begin();
 
-        if ($request === null) {
-            throw new AdoptionRequestNotFoundException('Adoption request not found.');
+        try {
+            $request = $this->adoptionRequestRepository->findById($requestId);
+
+            if ($request === null) {
+                throw new AdoptionRequestNotFoundException('Adoption request not found.');
+            }
+
+            $pet = $this->petRepository->findById($request->petId);
+
+            if ($pet === null) {
+                throw new AdoptionRequestNotFoundException('Pet not found.');
+            }
+
+            if ($pet->organizationId !== $currentUser->organizationId) {
+                throw new ForbiddenException('You can only manage requests for your own pets.');
+            }
+
+            if ($request->status !== 'pending') {
+                throw new ForbiddenException('Only pending requests can be approved.');
+            }
+
+            $updatedRequest = new AdoptionRequest(
+                $request->id,
+                $request->userId,
+                $request->petId,
+                'approved',
+                $request->message,
+            );
+
+            $this->adoptionRequestRepository->update($updatedRequest);
+
+            $adoptedPet = new Pet(
+                $pet->id,
+                $pet->organizationId,
+                $pet->name,
+                $pet->description,
+                $pet->animalType,
+                $pet->breed,
+                $pet->gender,
+                $pet->birthDate,
+                $pet->size,
+                'adopted',
+                $pet->city,
+                $pet->state,
+                $pet->latitude,
+                $pet->longitude,
+            );
+
+            $this->petRepository->update($adoptedPet);
+
+            $this->transactionManager?->commit();
+
+            return [
+                'id' => $updatedRequest->id,
+                'user_id' => $updatedRequest->userId,
+                'pet_id' => $updatedRequest->petId,
+                'status' => $updatedRequest->status,
+                'message' => $updatedRequest->message,
+            ];
+        } catch (\Throwable $exception) {
+            $this->transactionManager?->rollback();
+            throw $exception;
         }
-
-        $pet = $this->petRepository->findById($request->petId);
-
-        if ($pet === null) {
-            throw new AdoptionRequestNotFoundException('Pet not found.');
-        }
-
-        if ($pet->organizationId !== $currentUser->organizationId) {
-            throw new ForbiddenException('You can only manage requests for your own pets.');
-        }
-
-        if ($request->status !== 'pending') {
-            throw new ForbiddenException('Only pending requests can be approved.');
-        }
-
-        $updatedRequest = new AdoptionRequest(
-            $request->id,
-            $request->userId,
-            $request->petId,
-            'approved',
-            $request->message,
-        );
-
-        $this->adoptionRequestRepository->update($updatedRequest);
-
-        $adoptedPet = new Pet(
-            $pet->id,
-            $pet->organizationId,
-            $pet->name,
-            $pet->description,
-            $pet->animalType,
-            $pet->breed,
-            $pet->gender,
-            $pet->birthDate,
-            $pet->size,
-            'adopted',
-            $pet->city,
-            $pet->state,
-            $pet->latitude,
-            $pet->longitude,
-        );
-
-        $this->petRepository->update($adoptedPet);
-
-        return [
-            'id' => $updatedRequest->id,
-            'user_id' => $updatedRequest->userId,
-            'pet_id' => $updatedRequest->petId,
-            'status' => $updatedRequest->status,
-            'message' => $updatedRequest->message,
-        ];
     }
 }
