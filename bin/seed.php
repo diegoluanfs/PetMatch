@@ -37,6 +37,8 @@ try {
         'organization_admin',
         'active',
     );
+    ensureVerification($pdo, 'maria@example.com', 'email');
+    ensureVerification($pdo, 'maria@example.com', 'whatsapp');
     ensureUser(
         $pdo,
         null,
@@ -129,4 +131,32 @@ function ensurePet(PDO $pdo, int $organizationId, string $name, string $descript
         'city' => $city,
         'state' => $state,
     ]);
+}
+
+function ensureVerification(PDO $pdo, string $email, string $type): void
+{
+    $userStatement = $pdo->prepare('SELECT id FROM users WHERE lower(email) = lower(:email) LIMIT 1');
+    $userStatement->execute(['email' => $email]);
+    $userId = $userStatement->fetchColumn();
+
+    if ($userId === false) {
+        return;
+    }
+
+    $statement = $pdo->prepare(
+        'SELECT id FROM user_verifications
+         WHERE user_id = :user_id AND type = :type AND status = \'verified\'
+         LIMIT 1'
+    );
+    $statement->execute(['user_id' => (int) $userId, 'type' => $type]);
+
+    if ($statement->fetchColumn() !== false) {
+        return;
+    }
+
+    $insert = $pdo->prepare(
+        'INSERT INTO user_verifications (user_id, type, status, verified_at)
+         VALUES (:user_id, :type, \'verified\', now())'
+    );
+    $insert->execute(['user_id' => (int) $userId, 'type' => $type]);
 }

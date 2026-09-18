@@ -13,6 +13,7 @@ use PetMatch\Infrastructure\Security\SessionManager;
 use PetMatch\Tests\Support\InMemoryAdoptionRequestRepository;
 use PetMatch\Tests\Support\InMemoryPetRepository;
 use PetMatch\Tests\Support\InMemoryUserRepository;
+use PetMatch\Tests\Support\InMemoryUserVerificationRepository;
 use PHPUnit\Framework\TestCase;
 
 final class CreateAdoptionRequestTest extends TestCase
@@ -38,6 +39,9 @@ final class CreateAdoptionRequestTest extends TestCase
 
         $petRepository = new InMemoryPetRepository();
         $requestRepository = new InMemoryAdoptionRequestRepository();
+        $verificationRepository = new InMemoryUserVerificationRepository();
+        $verificationRepository->verify($userId, 'email');
+        $verificationRepository->verify($userId, 'whatsapp');
         $sessionManager = new SessionManager();
         $sessionManager->setUserId($userId);
         $sessionManager->setUserRole('adopter');
@@ -47,6 +51,7 @@ final class CreateAdoptionRequestTest extends TestCase
             $requestRepository,
             $userRepository,
             $sessionManager,
+            $verificationRepository,
         );
 
         $result = $useCase->execute([
@@ -59,6 +64,25 @@ final class CreateAdoptionRequestTest extends TestCase
         self::assertSame(1, $result['pet_id']);
         self::assertSame('pending', $result['status']);
         self::assertSame('Quero adotar o Thor.', $result['message']);
+    }
+
+    public function test_rejects_unverified_adopter(): void
+    {
+        $userRepository = new InMemoryUserRepository();
+        $userId = $userRepository->save(new User(null, null, 'Maria', 'maria@example.com', 'hash', 'adopter', 'active'));
+        $sessionManager = new SessionManager();
+        $sessionManager->setUserId($userId);
+
+        $this->expectException(ForbiddenException::class);
+
+        $useCase = new CreateAdoptionRequest(
+            new InMemoryPetRepository(),
+            new InMemoryAdoptionRequestRepository(),
+            $userRepository,
+            $sessionManager,
+            new InMemoryUserVerificationRepository(),
+        );
+        $useCase->execute(['pet_id' => 1, 'message' => 'Quero adotar.']);
     }
 
     public function test_rejects_organization_user(): void

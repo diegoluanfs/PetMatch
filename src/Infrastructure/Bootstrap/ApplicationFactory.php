@@ -36,6 +36,7 @@ use PetMatch\Infrastructure\Persistence\PdoPetRepository;
 use PetMatch\Infrastructure\Persistence\PdoPetPhotoRepository;
 use PetMatch\Infrastructure\Persistence\PdoOrganizationRepository;
 use PetMatch\Infrastructure\Persistence\PdoUserRepository;
+use PetMatch\Infrastructure\Persistence\PdoUserVerificationRepository;
 use PetMatch\Infrastructure\Persistence\PdoSwipeRepository;
 use PetMatch\Infrastructure\Storage\LocalPetPhotoStorage;
 use PetMatch\Infrastructure\Security\SessionManager;
@@ -82,6 +83,10 @@ final class ApplicationFactory
         $container->set(GetHealthStatus::class, static fn () => new GetHealthStatus());
 
         $container->set(PdoUserRepository::class, static fn (Container $container): PdoUserRepository => new PdoUserRepository(
+            $container->get(PDO::class)
+        ));
+
+        $container->set(PdoUserVerificationRepository::class, static fn (Container $container): PdoUserVerificationRepository => new PdoUserVerificationRepository(
             $container->get(PDO::class)
         ));
 
@@ -170,7 +175,8 @@ final class ApplicationFactory
             $container->get(PdoPetRepository::class),
             $container->get(PdoAdoptionRequestRepository::class),
             $container->get(PdoUserRepository::class),
-            $container->get(SessionManager::class)
+            $container->get(SessionManager::class),
+            $container->get(PdoUserVerificationRepository::class)
         ));
 
         $container->set(ListAdoptionRequests::class, static fn (Container $container): ListAdoptionRequests => new ListAdoptionRequests(

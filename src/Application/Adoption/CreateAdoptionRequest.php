@@ -11,6 +11,7 @@ use PetMatch\Domain\Adoption\AdoptionRequest;
 use PetMatch\Domain\Adoption\AdoptionRequestRepository;
 use PetMatch\Domain\Pet\PetRepository;
 use PetMatch\Domain\User\UserRepository;
+use PetMatch\Domain\User\UserVerificationRepository;
 use PetMatch\Infrastructure\Security\SessionManager;
 
 final class CreateAdoptionRequest
@@ -20,6 +21,7 @@ final class CreateAdoptionRequest
         private readonly AdoptionRequestRepository $adoptionRequestRepository,
         private readonly UserRepository $userRepository,
         private readonly SessionManager $sessionManager,
+        private readonly ?UserVerificationRepository $userVerificationRepository = null,
     ) {
     }
 
@@ -42,6 +44,13 @@ final class CreateAdoptionRequest
 
         if ($currentUser->role !== 'adopter') {
             throw new ForbiddenException('Only adopters can create adoption requests.');
+        }
+
+        if ($this->userVerificationRepository !== null
+            && (!$this->userVerificationRepository->isVerified($currentUserId, 'email')
+                || !$this->userVerificationRepository->isVerified($currentUserId, 'whatsapp'))
+        ) {
+            throw new ForbiddenException('Email and WhatsApp verification are required to request adoption.');
         }
 
         $petId = (int) ($input['pet_id'] ?? 0);
