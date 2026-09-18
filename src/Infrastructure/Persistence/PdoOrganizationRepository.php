@@ -41,6 +41,31 @@ final class PdoOrganizationRepository implements OrganizationRepository
         );
     }
 
+    public function findById(int $id): ?Organization
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT id, name, description, email, phone, status
+             FROM organizations
+             WHERE id = :id
+             LIMIT 1'
+        );
+        $statement->execute(['id' => $id]);
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+
+        if ($row === false) {
+            return null;
+        }
+
+        return new Organization(
+            (int) $row['id'],
+            $row['name'],
+            $row['description'],
+            $row['email'],
+            $row['phone'],
+            $row['status'],
+        );
+    }
+
     public function save(Organization $organization): int
     {
         $statement = $this->pdo->prepare(

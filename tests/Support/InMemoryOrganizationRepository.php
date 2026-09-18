@@ -16,6 +16,11 @@ final class InMemoryOrganizationRepository implements OrganizationRepository
 
     private int $nextId = 1;
 
+    public function findById(int $id): ?Organization
+    {
+        return $this->organizations[$id] ?? null;
+    }
+
     public function findByEmail(string $email): ?Organization
     {
         foreach ($this->organizations as $organization) {

@@ -9,10 +9,12 @@ use PetMatch\Application\Auth\ForbiddenException;
 use PetMatch\Application\Auth\NotAuthenticatedException;
 use PetMatch\Application\Pet\CreatePet;
 use PetMatch\Domain\User\User;
+use PetMatch\Domain\Organization\Organization;
 use PetMatch\Infrastructure\Security\SessionManager;
 use PHPUnit\Framework\TestCase;
 use PetMatch\Tests\Support\InMemoryPetRepository;
 use PetMatch\Tests\Support\InMemoryUserRepository;
+use PetMatch\Tests\Support\InMemoryOrganizationRepository;
 
 final class CreatePetTest extends TestCase
 {
@@ -90,6 +92,20 @@ final class CreatePetTest extends TestCase
             'city' => 'Santa Maria',
             'state' => 'RS',
         ]);
+    }
+
+    public function test_rejects_inactive_organization(): void
+    {
+        $userRepository = new InMemoryUserRepository();
+        $organizationRepository = new InMemoryOrganizationRepository();
+        $organizationId = $organizationRepository->save(new Organization(null, 'ONG', null, 'ong@example.com', '5555', 'pending'));
+        $userId = $userRepository->save(new User(null, $organizationId, 'ONG Admin', 'ong@example.com', 'hash', 'organization_admin', 'active'));
+        $sessionManager = new SessionManager();
+        $sessionManager->setUserId($userId);
+
+        $this->expectException(ForbiddenException::class);
+        $useCase = new CreatePet(new InMemoryPetRepository(), $userRepository, $sessionManager, $organizationRepository);
+        $useCase->execute(['name' => 'Thor', 'description' => 'Labrador', 'animal_type' => 'dog', 'breed' => 'labrador', 'size' => 'large', 'city' => 'Santa Maria', 'state' => 'RS']);
     }
 
     public function test_rejects_missing_authentication(): void

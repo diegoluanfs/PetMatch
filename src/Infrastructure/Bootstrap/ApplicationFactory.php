@@ -146,7 +146,8 @@ final class ApplicationFactory
         $container->set(CreatePet::class, static fn (Container $container): CreatePet => new CreatePet(
             $container->get(PdoPetRepository::class),
             $container->get(PdoUserRepository::class),
-            $container->get(SessionManager::class)
+            $container->get(SessionManager::class),
+            $container->get(PdoOrganizationRepository::class)
         ));
 
         $container->set(ArchivePet::class, static fn (Container $container): ArchivePet => new ArchivePet(
