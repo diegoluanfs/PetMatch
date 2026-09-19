@@ -55,6 +55,7 @@ Interfaces:
 
 - Catálogo público: `http://localhost:8080/`
 - Área de testes da organização: `http://localhost:8080/playground`
+- Manual técnico da API: [`docs/api.md`](docs/api.md)
 
 Execute a suíte automatizada com:
 
