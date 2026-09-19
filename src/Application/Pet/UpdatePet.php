@@ -9,6 +9,7 @@ use PetMatch\Application\Auth\ForbiddenException;
 use PetMatch\Application\Auth\NotAuthenticatedException;
 use PetMatch\Domain\Pet\Pet;
 use PetMatch\Domain\Pet\PetRepository;
+use PetMatch\Domain\Organization\OrganizationRepository;
 use PetMatch\Domain\User\UserRepository;
 use PetMatch\Infrastructure\Security\SessionManager;
 
@@ -18,6 +19,7 @@ final class UpdatePet
         private readonly PetRepository $petRepository,
         private readonly UserRepository $userRepository,
         private readonly SessionManager $sessionManager,
+        private readonly ?OrganizationRepository $organizationRepository = null,
     ) {
     }
 
@@ -40,6 +42,13 @@ final class UpdatePet
 
         if (!in_array($currentUser->role, ['organization_admin', 'admin'], true) || $currentUser->organizationId === null) {
             throw new ForbiddenException('Only organization users can update pets.');
+        }
+
+        if ($this->organizationRepository !== null) {
+            $organization = $this->organizationRepository->findById($currentUser->organizationId);
+            if ($organization === null || $organization->status !== 'active') {
+                throw new ForbiddenException('The organization must be active to update pets.');
+            }
         }
 
         $pet = $this->petRepository->findById($petId);

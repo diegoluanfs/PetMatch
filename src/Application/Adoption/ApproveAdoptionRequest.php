@@ -9,6 +9,7 @@ use PetMatch\Application\Auth\NotAuthenticatedException;
 use PetMatch\Application\Transaction\TransactionManager;
 use PetMatch\Domain\Adoption\AdoptionRequest;
 use PetMatch\Domain\Adoption\AdoptionRequestRepository;
+use PetMatch\Domain\Organization\OrganizationRepository;
 use PetMatch\Domain\Pet\Pet;
 use PetMatch\Domain\Pet\PetRepository;
 use PetMatch\Domain\User\UserRepository;
@@ -22,6 +23,7 @@ final class ApproveAdoptionRequest
         private readonly UserRepository $userRepository,
         private readonly SessionManager $sessionManager,
         private readonly ?TransactionManager $transactionManager = null,
+        private readonly ?OrganizationRepository $organizationRepository = null,
     ) {
     }
 
@@ -44,6 +46,13 @@ final class ApproveAdoptionRequest
 
         if (!in_array($currentUser->role, ['organization_admin', 'admin'], true) || $currentUser->organizationId === null) {
             throw new ForbiddenException('Only organization users can approve adoption requests.');
+        }
+
+        if ($this->organizationRepository !== null) {
+            $organization = $this->organizationRepository->findById($currentUser->organizationId);
+            if ($organization === null || $organization->status !== 'active') {
+                throw new ForbiddenException('The organization must be active to approve adoption requests.');
+            }
         }
 
         $this->transactionManager?->begin();

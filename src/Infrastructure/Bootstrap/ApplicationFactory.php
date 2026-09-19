@@ -153,27 +153,31 @@ final class ApplicationFactory
         $container->set(ArchivePet::class, static fn (Container $container): ArchivePet => new ArchivePet(
             $container->get(PdoPetRepository::class),
             $container->get(PdoUserRepository::class),
-            $container->get(SessionManager::class)
+            $container->get(SessionManager::class),
+            $container->get(PdoOrganizationRepository::class)
         ));
 
         $container->set(AddPetPhoto::class, static fn (Container $container): AddPetPhoto => new AddPetPhoto(
             $container->get(PdoPetRepository::class),
             $container->get(PdoPetPhotoRepository::class),
             $container->get(PdoUserRepository::class),
-            $container->get(SessionManager::class)
+            $container->get(SessionManager::class),
+            $container->get(PdoOrganizationRepository::class)
         ));
 
         $container->set(RemovePetPhoto::class, static fn (Container $container): RemovePetPhoto => new RemovePetPhoto(
             $container->get(PdoPetRepository::class),
             $container->get(PdoPetPhotoRepository::class),
             $container->get(PdoUserRepository::class),
-            $container->get(SessionManager::class)
+            $container->get(SessionManager::class),
+            $container->get(PdoOrganizationRepository::class)
         ));
 
         $container->set(UpdatePet::class, static fn (Container $container): UpdatePet => new UpdatePet(
             $container->get(PdoPetRepository::class),
             $container->get(PdoUserRepository::class),
-            $container->get(SessionManager::class)
+            $container->get(SessionManager::class),
+            $container->get(PdoOrganizationRepository::class)
         ));
 
         $container->set(CreateAdoptionRequest::class, static fn (Container $container): CreateAdoptionRequest => new CreateAdoptionRequest(
@@ -200,14 +204,16 @@ final class ApplicationFactory
             $container->get(PdoAdoptionRequestRepository::class),
             $container->get(PdoUserRepository::class),
             $container->get(SessionManager::class),
-            $container->get(PdoTransactionManager::class)
+            $container->get(PdoTransactionManager::class),
+            $container->get(PdoOrganizationRepository::class)
         ));
 
         $container->set(RejectAdoptionRequest::class, static fn (Container $container): RejectAdoptionRequest => new RejectAdoptionRequest(
             $container->get(PdoPetRepository::class),
             $container->get(PdoAdoptionRequestRepository::class),
             $container->get(PdoUserRepository::class),
-            $container->get(SessionManager::class)
+            $container->get(SessionManager::class),
+            $container->get(PdoOrganizationRepository::class)
         ));
 
         $container->set(WithdrawAdoptionRequest::class, static fn (Container $container): WithdrawAdoptionRequest => new WithdrawAdoptionRequest(

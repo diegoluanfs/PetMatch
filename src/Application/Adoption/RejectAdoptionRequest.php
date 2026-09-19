@@ -8,6 +8,7 @@ use PetMatch\Application\Auth\ForbiddenException;
 use PetMatch\Application\Auth\NotAuthenticatedException;
 use PetMatch\Domain\Adoption\AdoptionRequest;
 use PetMatch\Domain\Adoption\AdoptionRequestRepository;
+use PetMatch\Domain\Organization\OrganizationRepository;
 use PetMatch\Domain\Pet\PetRepository;
 use PetMatch\Domain\User\UserRepository;
 use PetMatch\Infrastructure\Security\SessionManager;
@@ -19,6 +20,7 @@ final class RejectAdoptionRequest
         private readonly AdoptionRequestRepository $adoptionRequestRepository,
         private readonly UserRepository $userRepository,
         private readonly SessionManager $sessionManager,
+        private readonly ?OrganizationRepository $organizationRepository = null,
     ) {
     }
 
@@ -41,6 +43,13 @@ final class RejectAdoptionRequest
 
         if (!in_array($currentUser->role, ['organization_admin', 'admin'], true) || $currentUser->organizationId === null) {
             throw new ForbiddenException('Only organization users can reject adoption requests.');
+        }
+
+        if ($this->organizationRepository !== null) {
+            $organization = $this->organizationRepository->findById($currentUser->organizationId);
+            if ($organization === null || $organization->status !== 'active') {
+                throw new ForbiddenException('The organization must be active to reject adoption requests.');
+            }
         }
 
         $request = $this->adoptionRequestRepository->findById($requestId);
