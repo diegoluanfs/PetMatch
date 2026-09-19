@@ -13,6 +13,9 @@ use PetMatch\Application\Adoption\RejectAdoptionRequest;
 use PetMatch\Application\Adoption\WithdrawAdoptionRequest;
 use PetMatch\Application\Engagement\SwipePet;
 use PetMatch\Application\Engagement\ListLikedPets;
+use PetMatch\Application\Engagement\CreateFavorite;
+use PetMatch\Application\Engagement\RemoveFavorite;
+use PetMatch\Application\Engagement\ListFavorites;
 use PetMatch\Application\System\GetHealthStatus;
 use PetMatch\Application\Auth\RegisterUser;
 use PetMatch\Application\Auth\GetAuthenticatedUser;
@@ -40,6 +43,7 @@ use PetMatch\Infrastructure\Persistence\PdoOrganizationRepository;
 use PetMatch\Infrastructure\Persistence\PdoUserRepository;
 use PetMatch\Infrastructure\Persistence\PdoUserVerificationRepository;
 use PetMatch\Infrastructure\Persistence\PdoSwipeRepository;
+use PetMatch\Infrastructure\Persistence\PdoFavoriteRepository;
 use PetMatch\Infrastructure\Storage\LocalPetPhotoStorage;
 use PetMatch\Infrastructure\Security\SessionManager;
 use PetMatch\Presentation\Controllers\HealthController;
@@ -67,6 +71,9 @@ use PetMatch\Presentation\Controllers\RejectAdoptionRequestController;
 use PetMatch\Presentation\Controllers\WithdrawAdoptionRequestController;
 use PetMatch\Presentation\Controllers\SwipePetController;
 use PetMatch\Presentation\Controllers\ListLikedPetsController;
+use PetMatch\Presentation\Controllers\CreateFavoriteController;
+use PetMatch\Presentation\Controllers\RemoveFavoriteController;
+use PetMatch\Presentation\Controllers\ListFavoritesController;
 
 final class ApplicationFactory
 {
@@ -111,6 +118,10 @@ final class ApplicationFactory
         ));
 
         $container->set(PdoSwipeRepository::class, static fn (Container $container): PdoSwipeRepository => new PdoSwipeRepository(
+            $container->get(PDO::class)
+        ));
+
+        $container->set(PdoFavoriteRepository::class, static fn (Container $container): PdoFavoriteRepository => new PdoFavoriteRepository(
             $container->get(PDO::class)
         ));
 
@@ -232,6 +243,22 @@ final class ApplicationFactory
             $container->get(SessionManager::class)
         ));
 
+        $container->set(CreateFavorite::class, static fn (Container $container): CreateFavorite => new CreateFavorite(
+            $container->get(PdoPetRepository::class),
+            $container->get(PdoFavoriteRepository::class),
+            $container->get(SessionManager::class)
+        ));
+
+        $container->set(RemoveFavorite::class, static fn (Container $container): RemoveFavorite => new RemoveFavorite(
+            $container->get(PdoFavoriteRepository::class),
+            $container->get(SessionManager::class)
+        ));
+
+        $container->set(ListFavorites::class, static fn (Container $container): ListFavorites => new ListFavorites(
+            $container->get(PdoFavoriteRepository::class),
+            $container->get(SessionManager::class)
+        ));
+
         $container->set(LoginUser::class, static fn (Container $container): LoginUser => new LoginUser(
             $container->get(PdoUserRepository::class)
         ));
@@ -346,6 +373,10 @@ final class ApplicationFactory
             $container->get(ListLikedPets::class)
         ));
 
+        $container->set(CreateFavoriteController::class, static fn (Container $container): CreateFavoriteController => new CreateFavoriteController($container->get(CreateFavorite::class)));
+        $container->set(RemoveFavoriteController::class, static fn (Container $container): RemoveFavoriteController => new RemoveFavoriteController($container->get(RemoveFavorite::class)));
+        $container->set(ListFavoritesController::class, static fn (Container $container): ListFavoritesController => new ListFavoritesController($container->get(ListFavorites::class)));
+
         $container->set(Router::class, static fn (Container $container): Router => new Router([
             'GET /health' => $container->get(HealthController::class),
             'GET /' => $container->get(PublicHomeController::class),
@@ -369,6 +400,9 @@ final class ApplicationFactory
             'GET /api/v1/organizations/adoption-requests' => $container->get(ListOrganizationAdoptionRequestsController::class),
             'POST /api/v1/pets/{id}/swipe' => $container->get(SwipePetController::class),
             'GET /api/v1/me/liked-pets' => $container->get(ListLikedPetsController::class),
+            'GET /api/v1/me/favorites' => $container->get(ListFavoritesController::class),
+            'POST /api/v1/pets/{id}/favorite' => $container->get(CreateFavoriteController::class),
+            'DELETE /api/v1/pets/{id}/favorite' => $container->get(RemoveFavoriteController::class),
             'PATCH /api/v1/adoption-requests/{id}/approve' => $container->get(ApproveAdoptionRequestController::class),
             'PATCH /api/v1/adoption-requests/{id}/reject' => $container->get(RejectAdoptionRequestController::class),
             'PATCH /api/v1/adoption-requests/{id}/withdraw' => $container->get(WithdrawAdoptionRequestController::class),
