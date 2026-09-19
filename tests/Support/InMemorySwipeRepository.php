@@ -44,4 +44,9 @@ final class InMemorySwipeRepository implements SwipeRepository
             ),
         ));
     }
+
+    public function findMatchesByUserId(int $userId): array
+    {
+        return $this->findLikedByUserId($userId);
+    }
 }

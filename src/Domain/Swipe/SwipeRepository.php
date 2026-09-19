@@ -12,4 +12,9 @@ interface SwipeRepository
      * @return list<array<string, mixed>>
      */
     public function findLikedByUserId(int $userId): array;
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function findMatchesByUserId(int $userId): array;
 }

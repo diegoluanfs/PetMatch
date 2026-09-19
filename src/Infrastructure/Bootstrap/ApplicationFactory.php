@@ -16,6 +16,7 @@ use PetMatch\Application\Engagement\ListLikedPets;
 use PetMatch\Application\Engagement\CreateFavorite;
 use PetMatch\Application\Engagement\RemoveFavorite;
 use PetMatch\Application\Engagement\ListFavorites;
+use PetMatch\Application\Engagement\ListMatches;
 use PetMatch\Application\System\GetHealthStatus;
 use PetMatch\Application\Auth\RegisterUser;
 use PetMatch\Application\Auth\GetAuthenticatedUser;
@@ -74,6 +75,7 @@ use PetMatch\Presentation\Controllers\ListLikedPetsController;
 use PetMatch\Presentation\Controllers\CreateFavoriteController;
 use PetMatch\Presentation\Controllers\RemoveFavoriteController;
 use PetMatch\Presentation\Controllers\ListFavoritesController;
+use PetMatch\Presentation\Controllers\ListMatchesController;
 
 final class ApplicationFactory
 {
@@ -259,6 +261,11 @@ final class ApplicationFactory
             $container->get(SessionManager::class)
         ));
 
+        $container->set(ListMatches::class, static fn (Container $container): ListMatches => new ListMatches(
+            $container->get(PdoSwipeRepository::class),
+            $container->get(SessionManager::class)
+        ));
+
         $container->set(LoginUser::class, static fn (Container $container): LoginUser => new LoginUser(
             $container->get(PdoUserRepository::class)
         ));
@@ -376,6 +383,7 @@ final class ApplicationFactory
         $container->set(CreateFavoriteController::class, static fn (Container $container): CreateFavoriteController => new CreateFavoriteController($container->get(CreateFavorite::class)));
         $container->set(RemoveFavoriteController::class, static fn (Container $container): RemoveFavoriteController => new RemoveFavoriteController($container->get(RemoveFavorite::class)));
         $container->set(ListFavoritesController::class, static fn (Container $container): ListFavoritesController => new ListFavoritesController($container->get(ListFavorites::class)));
+        $container->set(ListMatchesController::class, static fn (Container $container): ListMatchesController => new ListMatchesController($container->get(ListMatches::class)));
 
         $container->set(Router::class, static fn (Container $container): Router => new Router([
             'GET /health' => $container->get(HealthController::class),
@@ -403,6 +411,7 @@ final class ApplicationFactory
             'GET /api/v1/me/favorites' => $container->get(ListFavoritesController::class),
             'POST /api/v1/pets/{id}/favorite' => $container->get(CreateFavoriteController::class),
             'DELETE /api/v1/pets/{id}/favorite' => $container->get(RemoveFavoriteController::class),
+            'GET /api/v1/me/matches' => $container->get(ListMatchesController::class),
             'PATCH /api/v1/adoption-requests/{id}/approve' => $container->get(ApproveAdoptionRequestController::class),
             'PATCH /api/v1/adoption-requests/{id}/reject' => $container->get(RejectAdoptionRequestController::class),
             'PATCH /api/v1/adoption-requests/{id}/withdraw' => $container->get(WithdrawAdoptionRequestController::class),
